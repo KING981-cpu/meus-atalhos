@@ -3,99 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Portal de Estudos</title>
+    <title>Meu Painel de Estudos Pro</title>
     <style>
-        /* ESTRUTURA GERAL */
         body {
             font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
         }
 
-        /* BARRA LATERAL (MENU) */
-        .sidebar {
-            width: 250px;
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
             background: rgba(255, 255, 255, 0.95);
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-            z-index: 10;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
-        h2 { font-size: 1.2rem; color: #333; text-align: center; margin-bottom: 20px; }
+        h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
-        /* BUSCA NO GOOGLE */
-        .search-box input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 20px;
-            margin-bottom: 10px;
-            outline: none;
-        }
-
-        /* BOTÕES */
+        /* Estilo dos Links */
+        .link-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn {
             padding: 12px;
             text-decoration: none;
             color: white;
             border-radius: 8px;
-            font-weight: bold;
             text-align: center;
+            font-weight: bold;
+            font-size: 13px;
             transition: 0.3s;
-            font-size: 14px;
         }
-        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .btn:hover { transform: translateY(-3px); opacity: 0.9; }
 
+        /* Bloco de Notas */
+        textarea {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        /* Cores */
         .bg-enem { background-color: #27ae60; }
         .bg-resposta { background-color: #e74c3c; }
-        .bg-gpt { background-color: #10a37f; }
-        .bg-gemini { background-color: #4285f4; }
-        .bg-estude { background-color: #8e44ad; }
-
-        /* ÁREA DO NAVEGADOR */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .viewer {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background-color: white;
-        }
+        .bg-ai { background-color: #10a37f; }
+        .bg-extra { background-color: #8e44ad; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2>🚀 Estudos</h2>
+    <div class="dashboard">
+        <div class="card">
+            <h2>🔗 Atalhos de Estudo</h2>
+            <div class="link-grid">
+                <a href="https://cursoenemgratuito.com.br/" target="_blank" class="btn bg-enem">Enem Gratuito</a>
+                <a href="https://www.respostacerta.com.br/" target="_blank" class="btn bg-resposta">Resposta Certa</a>
+                <a href="https://chatgpt.com/" target="_blank" class="btn bg-ai">ChatGPT</a>
+                <a href="https://gemini.google.com/" target="_blank" class="btn bg-ai">Gemini</a>
+                <a href="https://www.estudesemfronteiras.com/" target="_blank" class="btn bg-extra">Sem Fronteiras</a>
+            </div>
+        </div>
 
-        <form action="https://www.google.com/search" method="get" target="navegador" class="search-box">
-            <input type="text" name="q" placeholder="Buscar no Google..." required>
-        </form>
-        
-        <div class="links" style="display: flex; flex-direction: column; gap: 10px;">
-            <a href="https://cursoenemgratuito.com.br/" target="navegador" class="btn bg-enem">Enem Gratuito</a>
-            <a href="https://www.respostacerta.com.br/" target="navegador" class="btn bg-resposta">Resposta Certa</a>
-            <a href="https://www.estudesemfronteiras.com/" target="navegador" class="btn bg-estude">Estude S. Fronteiras</a>
-            
-            <hr style="width: 100%; border: 0.5px solid #ddd; margin: 10px 0;">
-            
-            <a href="https://chatgpt.com/" target="_blank" class="btn bg-gpt">ChatGPT (Nova Aba)</a>
-            <a href="https://gemini.google.com/" target="_blank" class="btn bg-gemini">Gemini (Nova Aba)</a>
+        <div class="card">
+            <h2>🔍 Pesquisa Direta</h2>
+            <form action="https://www.google.com/search" method="get" target="_blank">
+                <input type="text" name="q" placeholder="O que quer aprender hoje?" style="width:100%; padding:10px; border-radius:20px; border:1px solid #ddd;">
+                <button type="submit" style="margin-top:10px; width:100%; padding:8px; border-radius:20px; background:#4285f4; color:white; border:none; cursor:pointer;">Pesquisar no Google</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>📝 Lembretes do Dia</h2>
+            <textarea id="notas" placeholder="Digite seus tópicos de estudo aqui..."></textarea>
+            <p style="font-size: 10px; color: #666;">*As notas são salvas automaticamente neste navegador.</p>
         </div>
     </div>
 
-    <div class="main-content">
-        <iframe name="navegador" class="viewer" src="https://cursoenemgratuito.com.br/"></iframe>
-    </div>
+    <script>
+        // Lógica simples para salvar as notas automaticamente
+        const campoNotas = document.getElementById('notas');
+        campoNotas.value = localStorage.getItem('meus-estudos-notas') || '';
+        
+        campoNotas.addEventListener('input', () => {
+            localStorage.setItem('meus-estudos-notas', campoNotas.value);
+        });
+    </script>
 
 </body>
 </html>
