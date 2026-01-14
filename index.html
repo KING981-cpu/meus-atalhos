@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Portal de Estudos</title>
+    <style>
+        /* CONFIGURAÇÃO DO CORPO DO SITE */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* DEGRADÊ: O comando linear-gradient cria a transição entre cores. 
+               O '135deg' define a inclinação do efeito. */
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            
+            /* FLEXBOX: Use isso para centralizar tudo na tela sem esforço. */
+            display: flex;
+            justify-content: center; /* Centraliza na horizontal */
+            align-items: center;     /* Centraliza na vertical */
+            min-height: 100vh;       /* Garante que o fundo cubra toda a altura da tela */
+            margin: 0;
+        }
+
+        /* CAIXA BRANCA CENTRAL (CONTAINER) */
+        .container {
+            background: rgba(255, 255, 255, 0.95); /* Branco com leve transparência */
+            padding: 30px;
+            border-radius: 20px;     /* Bordas arredondadas */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); /* Sombra para dar profundidade */
+            width: 90%;
+            max-width: 450px;        /* Não deixa a caixa ficar muito larga no PC */
+        }
+
+        h2 { text-align: center; color: #333; margin-top: 0; }
+
+        /* ESTILO DA BARRA DE PESQUISA */
+        .search-box { margin-bottom: 25px; }
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;     /* Faz a barra de busca ficar oval */
+            font-size: 16px;
+            outline: none;           /* Remove a linha azul ao clicar */
+            box-sizing: border-box;  /* Garante que o padding não quebre a largura */
+        }
+
+        /* LISTA DE LINKS */
+        .links { display: flex; flex-direction: column; gap: 12px; }
+
+        /* ESTILO GERAL DOS BOTÕES */
+        .btn {
+            display: block;
+            padding: 15px;
+            text-decoration: none;   /* Tira o sublinhado de link */
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            
+            /* ANIMAÇÃO: Faz o efeito de 'passar o mouse' ser suave */
+            transition: transform 0.2s ease, filter 0.2s; 
+        }
+
+        /* EFEITO AO PASSAR O MOUSE (HOVER) */
+        .btn:hover {
+            transform: translateY(-3px); /* Faz o botão 'subir' levemente */
+            filter: brightness(1.1);     /* Deixa a cor um pouquinho mais clara */
+        }
+        
+        /* CORES INDIVIDUAIS - Isso você pede para a IA gerar as cores */
+        .bg-enem { background-color: #27ae60; }
+        .bg-resposta { background-color: #e74c3c; }
+        .bg-gpt { background-color: #10a37f; }
+        .bg-gemini { background-color: #4285f4; }
+        .bg-estude { background-color: #8e44ad; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚀 Portal de Estudos</h2>
+
+    <form action="https://www.google.com/search" method="get" class="search-box" target="_blank">
+        <input type="text" name="q" placeholder="Pesquisar no Google..." required>
+    </form>
+    
+    <div class="links">
+        <a href="https://cursoenemgratuito.com.br/" target="_blank" class="btn bg-enem">Enem Curso Gratuito</a>
+        <a href="https://www.respostacerta.com.br/" target="_blank" class="btn bg-resposta">Resposta Certa</a>
+        <a href="https://chatgpt.com/" target="_blank" class="btn bg-gpt">ChatGPT</a>
+        <a href="https://gemini.google.com/" target="_blank" class="btn bg-gemini">Google Gemini</a>
+        <a href="https://www.estudesemfronteiras.com/" target="_blank" class="btn bg-estude">Estude Sem Fronteiras</a>
+    </div>
+</div>
+
+</body>
+</html>
