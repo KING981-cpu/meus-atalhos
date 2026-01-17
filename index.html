@@ -3,59 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Monitor de Estudos Cloud</title>
+    <title>Learn Código - Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #1e3c72; --secondary: #2a5298; --accent: #00d2ff; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #333; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { background: var(--white); border-radius: 15px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
-        .main-content { max-width: 1100px; display: none; grid-template-columns: 1fr 1fr; gap: 20px; width: 95%; margin: 20px auto; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        /* Variáveis de Cores (Claro/Escuro) */
+        :root { 
+            --bg: #f0f2f5; --card-bg: #ffffff; --text: #333; 
+            --primary: #1e3c72; --accent: #00d2ff; 
+        }
+        body.dark-mode { 
+            --bg: #121212; --card-bg: #1e1e1e; --text: #e0e0e0; 
+            --primary: #00d2ff; 
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: var(--card-bg); border-radius: 15px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .main-content { max-width: 1000px; display: none; grid-template-columns: 1fr 1fr; gap: 20px; width: 95%; margin: 20px auto; }
+        
+        /* Barra de Meta */
+        .meta-container { background: #ddd; border-radius: 10px; height: 20px; width: 100%; margin: 15px 0; overflow: hidden; }
+        #meta-bar { background: var(--accent); height: 100%; width: 0%; transition: 0.5s; text-align: center; font-size: 12px; color: #000; font-weight: bold; line-height: 20px; }
+
+        .timer-display { font-size: 3rem; font-weight: bold; text-align: center; color: #e74c3c; }
+        .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-site { padding: 10px; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-size: 11px; font-weight: bold; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .timer-display { font-size: 3.5rem; font-weight: bold; text-align: center; color: #e74c3c; margin: 10px 0; }
-        .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-site { padding: 12px; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-size: 11px; font-weight: bold; }
-        .history-item { background:#f4f7f6; padding:12px; margin-bottom:10px; border-radius:8px; border-left:5px solid var(--accent); font-size: 0.85rem; }
+        .btn-theme { background: #555; color: white; width: auto; padding: 5px 15px; font-size: 10px; position: fixed; top: 10px; right: 10px; }
+        
         @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
+<button class="btn-theme" onclick="toggleTheme()">🌓 MUDAR TEMA</button>
+
 <div id="login-screen" class="card">
-    <h2 style="text-align:center; color:var(--primary)">Acesso aos Estudos</h2>
-    <p style="text-align:center; font-size: 0.8rem; color: #666;">Os dados salvos aqui serão sincronizados em todos os seus aparelhos.</p>
-    <input type="text" id="username" placeholder="Digite seu usuário">
-    <button class="btn-primary" onclick="login()">ENTRAR AGORA</button>
+    <h2 style="text-align:center">Acesso Learn Código</h2>
+    <input type="text" id="username" placeholder="Usuário" style="width:100%; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #ccc;">
+    <button class="btn-primary" onclick="login()">ENTRAR</button>
 </div>
 
 <div id="study-panel" class="main-content">
     <div class="card" style="max-width: 100%;">
-        <h2>🚀 Olá, <span id="user-display"></span>!</h2>
-        <div class="site-grid">
-            <a href="https://chatgpt.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#27ae60">ChatGPT</a>
-            <a href="https://respostacerta.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#e74c3c">Resposta Certa</a>
-            <a href="https://gemini.google.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#10a37f">Gemini</a>
-            <a href="https://www.estudesemfronteiras.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#8e44ad">Sem Fronteiras</a>
-        </div>
+        <h3>🎯 Meta do Dia (6h)</h3>
+        <div class="meta-container"><div id="meta-bar">0%</div></div>
+        
         <div class="timer-display" id="main-timer">00:00:00</div>
-        <div style="display:flex; gap:10px; justify-content:center;">
-            <button onclick="startTimer()" style="background:#2ecc71; color:white; flex:1">PLAY</button>
-            <button onclick="pauseTimer()" style="background:#f39c12; color:white; flex:1">PAUSE</button>
+        
+        <div style="display:flex; gap:10px;">
+            <button onclick="startTimer()" style="background:#2ecc71; color:white;">PLAY</button>
+            <button onclick="pauseTimer()" style="background:#f39c12; color:white;">PAUSE</button>
         </div>
-        <textarea id="study-note" placeholder="O que você está estudando agora? (Ex: Matemática no trabalho)"></textarea>
-        <button class="btn-primary" onclick="saveToCloud()">SALVAR NA NUVEM</button>
-        <button onclick="location.reload()" style="background: none; color: #999; font-size: 0.7rem; text-decoration: underline;">Trocar de Usuário / Sair</button>
+
+        <div class="site-grid">
+            <a href="https://chatgpt.com.br/" target="_blank" class="btn-site" style="background:#27ae60">ChatGPT</a>
+            <a href="https://www.respostacerta.com.br/" target="_blank" class="btn-site" style="background:#e74c3c">Resposta Certa</a>
+            <a href="https://gemini.google.com/" target="_blank" class="btn-site" style="background:#10a37f">Gemini</a>
+            <a href="https://www.estudesemfronteiras.com/" target="_blank" class="btn-site" style="background:#8e44ad">Sem Fronteiras</a>
+        </div>
+        
+        <button class="btn-primary" onclick="saveToCloud()" style="margin-top:20px;">SALVAR NA NUVEM</button>
     </div>
 
     <div class="card" style="max-width: 100%;">
-        <h2>📅 Histórico Sincronizado</h2>
-        <div id="history-display" style="max-height: 450px; overflow-y: auto;">Buscando seus registros na nuvem...</div>
+        <h3>📅 Histórico Global</h3>
+        <div id="history-display" style="max-height: 350px; overflow-y: auto; font-size: 0.9rem;"></div>
     </div>
 </div>
 
 <script>
-    // CONFIGURAÇÃO JÁ CONECTADA COM SEU SUPABASE
     const supabaseUrl = 'https://eprzxmdrmuvwjkxwuumj.supabase.co'; 
     const supabaseKey = 'sb_publishable_fe-zUC8N7TkMFPU2AIE36A_NQGC2zJQ';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -64,80 +82,50 @@
     let seconds = 0;
     let timerInterval = null;
 
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
+
     async function login() {
         const user = document.getElementById('username').value.trim().toLowerCase();
-        if(!user) return alert("Por favor, digite um nome!");
+        if(!user) return;
         currentUser = user;
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('study-panel').style.display = 'grid';
-        document.getElementById('user-display').innerText = user;
         loadHistory();
     }
 
-    function startTimer() { 
-        if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); 
-    }
-    
-    function pauseTimer() { 
-        clearInterval(timerInterval); 
-        timerInterval = null; 
-    }
-    
+    function startTimer() { if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); }
+    function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
+
     function updateUI() {
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
         const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
         document.getElementById('main-timer').innerText = `${h}:${m}:${s}`;
+        
+        // Cálculo da Meta (6 horas = 21600 segundos)
+        let percent = Math.min((seconds / 21600) * 100, 100);
+        document.getElementById('meta-bar').style.width = percent + "%";
+        document.getElementById('meta-bar').innerText = Math.floor(percent) + "%";
     }
 
     async function saveToCloud() {
-        if(seconds === 0) return alert("O tempo está zerado!");
-        const note = document.getElementById('study-note').value;
-        const tempoFinal = document.getElementById('main-timer').innerText;
-        
+        if(seconds === 0) return;
         const { error } = await _supabase.from('estudos').insert([
-            { 
-                usuario: currentUser, 
-                data: new Date().toLocaleDateString('pt-BR'), 
-                tempo: tempoFinal,
-                resumo: note 
-            }
+            { usuario: currentUser, data: new Date().toLocaleDateString('pt-BR'), tempo: document.getElementById('main-timer').innerText }
         ]);
-
-        if(error) {
-            alert("Erro ao sincronizar: " + error.message);
-        } else {
-            alert("✅ Sincronizado! Dados salvos na nuvem.");
-            seconds = 0; 
-            pauseTimer(); 
-            updateUI(); 
-            document.getElementById('study-note').value = "";
-            loadHistory();
-        }
+        if(!error) { alert("Sincronizado!"); seconds = 0; updateUI(); loadHistory(); }
     }
 
     async function loadHistory() {
-        const { data, error } = await _supabase
-            .from('estudos')
-            .select('*')
-            .eq('usuario', currentUser)
-            .order('id', { ascending: false });
-        
-        const display = document.getElementById('history-display');
+        const { data } = await _supabase.from('estudos').select('*').eq('usuario', currentUser).order('id', { ascending: false });
         if(data) {
-            display.innerHTML = data.length === 0 ? "Nenhum registro encontrado para este usuário." : data.map(item => `
-                <div class="history-item">
-                    <b>${item.data}</b> — ⏱️ ${item.tempo}<br>
-                    <i style="color:#555">${item.resumo || 'Sem observações'}</i>
+            document.getElementById('history-display').innerHTML = data.map(item => `
+                <div style="border-bottom:1px solid #eee; padding:10px 0;">
+                    <b>${item.data}</b>: ${item.tempo}
                 </div>
             `).join('');
         }
     }
-
-    window.onbeforeunload = function() {
-        if (seconds > 0) return "Você tem um tempo não salvo. Deseja realmente sair?";
-    };
 </script>
 </body>
 </html>
-
