@@ -198,12 +198,26 @@
         if(data) {
             document.getElementById('history-display').innerHTML = data.map(item => `
                 <div style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #eee;">
-                    <b>${item.data}</b>: ${item.tempo}<br>
-                    <small>${item.resumo || ''}</small>
-                </div>
+    <b>${item.data}</b>: ${item.tempo}<br>
+    <small>${item.resumo || ''}</small><br>
+    <button onclick="deleteHistory(${item.id})" style="color: red; cursor: pointer;">Excluir</button>
+</div>
             `).join('');
         }
     }
+    async function deleteHistory(id) {
+    const { error } = await _supabase
+        .from('estudos')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Erro ao deletar:', error.message);
+    } else {
+        alert('Registro excluído com sucesso!');
+        loadHistory(); // Recarrega a lista automaticamente
+    }
+}
 </script>
 </body>
 </html>
