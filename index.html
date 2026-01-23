@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learn Código - Workspace</title>
@@ -21,7 +22,7 @@
             transition: 0.3s;
         }
         
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
 
         .timer-box { text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         .timer-display { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
@@ -38,21 +39,11 @@
         .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
         .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-site { padding: 10px; border-radius: 6px; color: white; text-decoration: none; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-site:hover { opacity: 0.9; }
+        .btn-site { padding: 10px; border-radius: 6px; color: white; text-decoration: none; text-align: center; font-size: 12px; font-weight: bold; }
 
         #login-screen { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        .login-container { background: var(--card-bg); padding: 40px; border-radius: 12px; width: 100%; max-width: 350px; }
         
         input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        input:invalid { border-color: #e74c3c; }
-        
-        .btn-primary { width: 100%; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .error { color: #e74c3c; font-size: 0.9rem; margin-bottom: 10px; }
-        .success { color: #27ae60; font-size: 0.9rem; margin-bottom: 10px; }
 
         @media (max-width: 768px) { 
             body { flex-direction: column; } 
@@ -62,39 +53,40 @@
 </head>
 <body>
 
-<div id="login-screen">
-    <div class="login-container">
-        <h2 style="text-align:center">Acesso aos Estudos</h2>
-        <p style="text-align:center; font-size: 0.8rem; color: #666;">Os dados salvos aqui serão sincronizados em todos os seus aparelhos.</p>
-        <div id="error-msg" class="error"></div>
-        <input type="text" id="username" placeholder="Digite seu usuário">
-        <input type="password" id="password" placeholder="Digite sua senha">
-        <button class="btn-primary" onclick="handleAuth()">ENTRAR AGORA</button>
-        <p style="text-align:center; font-size: 0.85rem; margin-top: 15px;">
-            <span onclick="toggleAuthMode()" style="cursor:pointer; color: var(--accent); text-decoration: underline;" id="toggle-auth">Não tem conta? Cadastre-se</span>
-        </p>
-    </div>
+<div id="login-screen" class="card">
+    <h2 style="text-align:center; color:var(--primary)">Acesso aos Estudos</h2>
+    <p style="text-align:center; font-size: 0.8rem; color: #666;">Os dados salvos aqui serão sincronizados em todos os seus aparelhos.</p>
+    <input type="text" id="username" placeholder="Digite seu usuário">
+    <button class="btn-primary" onclick="login()">ENTRAR AGORA</button>
 </div>
+
+<div id="study-panel" class="main-content">
+    <div class="card" style="max-width: 100%;">
+        <h2>🚀 Olá, <span id="user-display"></span>!</h2>
+        <div class="site-grid">
+            <a href="https://cursoenemgratuito.com.br/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#27ae60">Enem Gratuito</a>
+            <a href="https://respostacerta.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#e74c3c">Resposta Certa</a>
+            <a href="https://gemini.google.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#10a37f">Gemini</a>
+            <a href="https://www.estudesemfronteiras.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#8e44ad">Sem Fronteiras</a>
+        </div>
+        <div class="timer-display" id="main-timer">00:00:00</div>
+        <div class="meta-progress"><div id="meta-bar"></div></div>
+        <small id="percent-text">0% da meta</small>
+    </div>
+
+    <button class="nav-btn" onclick="startTimer()">▶ Iniciar Estudo</button>
+    <button class="nav-btn" onclick="pauseTimer()">⏸ Pausar</button>
+    <button class="nav-btn" onclick="saveToCloud()" style="border-color: var(--accent);">💾 Salvar Progresso</button>
+    
+    <hr style="width:100%; opacity:0.2; margin: 20px 0;">
+    
+    <button class="nav-btn" onclick="toggleTheme()">🌓 Alternar Tema</button>
+    <button class="nav-btn" onclick="location.reload()">🚪 Sair</button>
+</aside>
 
 <main class="main-content" id="study-panel">
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
         <div style="flex: 2; min-width: 300px;">
-            <div class="card">
-                <h2>🚀 Olá, <span id="user-display"></span>!</h2>
-            </div>
-
-            <div class="card">
-                <h3>⏱ Cronômetro de Estudo</h3>
-                <div class="timer-display" id="main-timer">00:00:00</div>
-                <div class="meta-progress"><div id="meta-bar"></div></div>
-                <small id="percent-text">0% da meta (6h)</small>
-                <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button class="btn-site" style="background:#4a90e2" onclick="startTimer()">▶ Iniciar</button>
-                    <button class="btn-site" style="background:#f39c12" onclick="pauseTimer()">⏸ Pausar</button>
-                </div>
-                <button class="btn-site" style="background:#27ae60; margin-top: 10px; width: 100%;" onclick="saveToCloud()">💾 Salvar Progresso</button>
-            </div>
-
             <div class="card">
                 <h3>🚀 Atalhos Rápidos</h3>
                 <div class="site-grid">
@@ -107,151 +99,73 @@
 
             <div class="card">
                 <h3>📝 Notas da Sessão</h3>
-                <textarea id="study-note" placeholder="O que está aprendendo agora?" style="width:100%; height:100px; border-radius:8px; padding:10px; box-sizing:border-box; font-family:inherit; border: 1px solid #ccc;"></textarea>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-site" style="background:#9b59b6" onclick="toggleTheme()">🌓 Alternar Tema</button>
-                <button class="btn-site" style="background:#e74c3c" onclick="logout()">🚪 Sair</button>
+                <textarea id="study-note" placeholder="O que está aprendendo agora?" style="width:100%; height:100px; border-radius:8px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
             </div>
         </div>
 
         <div style="flex: 1; min-width: 250px;">
             <div class="card">
                 <h3>📅 Histórico Cloud</h3>
-                <div id="history-display" style="font-size: 0.85rem; max-height: 400px; overflow-y: auto;"></div>
+                <div id="history-display" style="font-size: 0.85rem;"></div>
             </div>
         </div>
     </div>
 </main>
 
 <script>
-    // Authentication should be handled server-side via API gateway, not with exposed keys
-    const API_BASE = '/api'; // Replace with actual backend endpoint
-    
+    const supabaseUrl = 'https://eprzxmdrmuvwjkxwuumj.supabase.co'; 
+    const supabaseKey = 'sb_publishable_fe-zUC8N7TkMFPU2AIE36A_NQGC2zJQ';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
     let currentUser = "";
     let seconds = 0;
     let timerInterval = null;
     let isLoginMode = true;
 
-    // DOMPurify-like sanitization (simplified)
-    function sanitizeHTML(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function toggleTheme() { 
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-    }
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
 
     function toggleAuthMode() {
         isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Learn Código" : "Criar Conta";
+        document.getElementById('main-auth-btn').innerText = isLoginMode ? "Entrar" : "Cadastrar";
         document.getElementById('toggle-auth').innerText = isLoginMode ? "Não tem conta? Cadastre-se" : "Já tem conta? Faça Login";
-        clearErrorMsg();
-    }
-
-    function clearErrorMsg() {
-        document.getElementById('error-msg').className = 'error';
-        document.getElementById('error-msg').innerText = '';
-    }
-
-    function showError(msg) {
-        document.getElementById('error-msg').className = 'error';
-        document.getElementById('error-msg').innerText = sanitizeHTML(msg);
-    }
-
-    function showSuccess(msg) {
-        document.getElementById('error-msg').className = 'success';
-        document.getElementById('error-msg').innerText = sanitizeHTML(msg);
     }
 
     async function handleAuth() {
         const user = document.getElementById('username').value.trim().toLowerCase();
         const pass = document.getElementById('password').value;
-        const btn = event.target;
 
-        clearErrorMsg();
+        if(!user || !pass) return alert("Preencha todos os campos!");
 
-        if(!user || !pass) {
-            showError("Preencha todos os campos!");
-            return;
-        }
-
-        if(user.length < 3 || user.length > 20) {
-            showError("Usuário deve ter 3-20 caracteres!");
-            return;
-        }
-
-        if(pass.length < 6) {
-            showError("Senha deve ter ao menos 6 caracteres!");
-            return;
-        }
-
-        btn.disabled = true;
-
-        try {
-            const endpoint = isLoginMode ? '/login' : '/register';
-            const response = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, password: pass })
-            });
-
-            const result = await response.json();
-
-            if(response.ok) {
-                if(isLoginMode) {
-                    currentUser = user;
-                    localStorage.setItem('authToken', result.token);
-                    enterWorkspace();
-                } else {
-                    showSuccess("Cadastro realizado! Faça login para continuar.");
-                    document.getElementById('password').value = '';
-                    setTimeout(() => toggleAuthMode(), 1500);
-                }
+        if (isLoginMode) {
+            // Lógica de Login
+            const { data, error } = await _supabase.from('usuarios').select('*').eq('username', user).eq('password', pass).single();
+            if (data) {
+                currentUser = user;
+                enterWorkspace();
             } else {
-                showError(result.message || "Erro na autenticação!");
+                alert("Usuário ou senha incorretos!");
             }
-        } catch (e) {
-            showError("Erro de conexão. Tente novamente.");
-            console.error(e);
-        } finally {
-            btn.disabled = false;
+        } else {
+            // Lógica de Cadastro
+            const { error } = await _supabase.from('usuarios').insert([{ username: user, password: pass }]);
+            if (error) {
+                alert("Erro ao cadastrar: Usuário já existe!");
+            } else {
+                alert("Cadastro realizado! Agora faça login.");
+                toggleAuthMode();
+            }
         }
     }
 
     function enterWorkspace() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('study-panel').style.display = 'block';
-        document.getElementById('user-display').innerText = sanitizeHTML(currentUser);
         loadHistory();
     }
 
-    function logout() {
-        if(confirm("Tem certeza que deseja sair?")) {
-            currentUser = "";
-            seconds = 0;
-            clearInterval(timerInterval);
-            timerInterval = null;
-            localStorage.removeItem('authToken');
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('study-panel').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            clearErrorMsg();
-        }
-    }
-
-    function startTimer() { 
-        if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); 
-    }
-    
-    function pauseTimer() { 
-        clearInterval(timerInterval); 
-        timerInterval = null; 
-    }
+    function startTimer() { if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); }
+    function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
 
     function updateUI() {
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -265,98 +179,45 @@
     }
 
     async function saveToCloud() {
-        if(seconds === 0) {
-            showError("Cronômetro zerado! Estude um pouco antes de salvar.");
-            return;
-        }
-        
-        const note = document.getElementById('study-note').value.trim();
-        if(note.length > 500) {
-            showError("Nota muito longa (máx: 500 caracteres)!");
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE}/save-session`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ 
-                    tempo: document.getElementById('main-timer').innerText,
-                    resumo: note || 'Sem anotações'
-                })
-            });
-
-            if(response.ok) {
-                showSuccess("Progresso salvo com sucesso!");
-                seconds = 0; 
-                document.getElementById('study-note').value = "";
-                updateUI(); 
-                loadHistory(); 
-            } else {
-                showError("Erro ao salvar. Tente novamente.");
-            }
-        } catch (e) {
-            showError("Erro de conexão ao salvar.");
-            console.error(e);
+        if(seconds === 0) return alert("Cronômetro zerado!");
+        const note = document.getElementById('study-note').value;
+        const { error } = await _supabase.from('estudos').insert([
+            { usuario: currentUser, data: new Date().toLocaleDateString('pt-BR'), tempo: document.getElementById('main-timer').innerText, resumo: note }
+        ]);
+        if(!error) { 
+            alert("Progresso salvo!"); 
+            seconds = 0; 
+            document.getElementById('study-note').value = "";
+            updateUI(); 
+            loadHistory(); 
         }
     }
 
     async function loadHistory() {
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE}/history`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            const data = await response.json();
-            
-            if(data.length > 0) {
-                document.getElementById('history-display').innerHTML = data.map(item => `
-                    <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #ddd;">
-                        <b>${sanitizeHTML(item.data)}</b>: <span style="color: var(--accent);">${sanitizeHTML(item.tempo)}</span><br>
-                        <small>${sanitizeHTML(item.resumo)}</small><br>
-                        <button onclick="deleteHistory(${item.id})" style="color: #e74c3c; cursor: pointer; background: none; border: none; padding: 0; margin-top: 5px; font-size: 0.85rem;">🗑 Excluir</button>
-                    </div>
-                `).join('');
-            } else {
-                document.getElementById('history-display').innerHTML = '<p style="color: #999;">Nenhuma sessão registrada ainda.</p>';
-            }
-        } catch (e) {
-            document.getElementById('history-display').innerHTML = '<p style="color: #e74c3c;">Erro ao carregar histórico.</p>';
-            console.error(e);
+        const { data } = await _supabase.from('estudos').select('*').eq('usuario', currentUser).order('id', { ascending: false });
+        if(data) {
+            document.getElementById('history-display').innerHTML = data.map(item => `
+                <div style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #eee;">
+    <b>${item.data}</b>: ${item.tempo}<br>
+    <small>${item.resumo || ''}</small><br>
+    <button onclick="deleteHistory(${item.id})" style="color: red; cursor: pointer;">Excluir</button>
+</div>
+            `).join('');
         }
     }
-
     async function deleteHistory(id) {
-        if(!confirm("Confirmar exclusão?")) return;
-        
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE}/history/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if(response.ok) {
-                loadHistory();
-            } else {
-                alert('Erro ao deletar registro.');
-            }
-        } catch (e) {
-            alert('Erro de conexão ao deletar.');
-            console.error(e);
-        }
-    }
+    const { error } = await _supabase
+        .from('estudos')
+        .delete()
+        .eq('id', id);
 
-    window.addEventListener('load', () => {
-        if(localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
-        }
-    });
+    if (error) {
+        console.error('Erro ao deletar:', error.message);
+    } else {
+        alert('Registro excluído com sucesso!');
+        loadHistory(); // Recarrega a lista automaticamente
+    }
+}
 </script>
 </body>
 </html>
