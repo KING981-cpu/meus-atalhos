@@ -3,133 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn Código - Sistema de Prazos</title>
+    <title>Learn Código - Workspace Pro</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
+    
     <style>
-        :root { --primary: #0ea5e9; --dark: #0f172a; --text: #f8fafc; }
-        
-        body { 
-            margin: 0; font-family: 'Inter', sans-serif; 
-            background-color: var(--dark); color: var(--text);
-            display: flex; height: 100vh; overflow: hidden;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { 
+            --bg: #0f172a; 
+            --sidebar-bg: #020617; 
+            --accent: #0ea5e9; 
+            --text: #f8fafc;
+            --danger: #f43f5e;
         }
 
-        /* Sidebar */
-        .sidebar { width: 250px; background: #020617; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid #1e293b; }
-        .nav-item { 
-            padding: 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer;
-            color: #94a3b8; transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR PADRONIZADA --- */
+        .sidebar { 
+            width: 260px; 
+            background: var(--sidebar-bg); 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid #1e293b;
+            gap: 10px; /* Espaço igual entre botões */
         }
-        .nav-item:hover { background: #1e293b; color: white; }
-        .nav-item.active { background: var(--primary); color: white; }
 
-        /* Area Principal */
-        .content { flex: 1; padding: 30px; position: relative; overflow-y: auto; }
-        .tab-panel { display: none; width: 100%; }
-        .tab-panel.active { display: block; }
+        .sidebar h2 { color: var(--accent); margin-bottom: 30px; padding-left: 10px; }
 
-        /* CALENDÁRIO - SEGURANÇA DE LAYOUT */
-        #calendar-wrapper { 
-            background: white; /* Fundo branco para garantir contraste */
+        /* Botões Laterais - Todos idênticos em tamanho */
+        .nav-btn { 
+            width: 100%; /* Comprimento total da sidebar */
+            height: 50px; /* Altura fixa */
+            background: rgba(255, 255, 255, 0.05); 
+            border: none; 
+            color: #94a3b8; 
+            padding: 0 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            font-size: 15px;
+            transition: 0.2s;
+            text-align: left;
+        }
+
+        .nav-btn i { width: 20px; text-align: center; } /* Alinha os ícones verticalmente */
+
+        .nav-btn:hover { background: #1e293b; color: white; }
+        .nav-btn.active { background: var(--accent); color: white; font-weight: bold; }
+
+        .btn-logout { margin-top: auto; color: var(--danger); }
+
+        /* --- ÁREA DE CONTEÚDO --- */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- CALENDÁRIO --- */
+        #calendar-container { 
+            background: white; /* Fundo branco para garantir que as letras pretas apareçam */
             border-radius: 12px; 
-            padding: 20px;
-            min-height: 700px; /* Altura mínima forçada para não sumir */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            padding: 20px; 
+            min-height: 650px; 
+            color: #333;
         }
-        
-        /* Forçar visibilidade dos textos do calendário */
-        .fc { color: #1e293b !important; max-height: 800px; }
-        .fc-toolbar-title { font-weight: bold; color: #0f172a !important; }
-        .fc-daygrid-day-number { color: #0f172a !important; padding: 5px !important; }
+        .fc { color: #333 !important; }
 
-        .btn-new {
-            background: var(--primary); color: white; border: none;
-            padding: 10px 20px; border-radius: 6px; cursor: pointer;
-            font-weight: bold; margin-bottom: 20px;
-        }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
+        .btn-add-plan { background: var(--accent); border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <h2 style="color: var(--primary); margin-bottom: 30px;">Learn Código</h2>
-        <div class="nav-item active" onclick="changeTab('home', this)"><i class="fas fa-home"></i> Início</div>
-        <div class="nav-item" onclick="changeTab('calendar-tab', this)"><i class="fas fa-calendar-check"></i> Meu Calendário</div>
-        <div class="nav-item" onclick="location.reload()" style="margin-top: auto; color: #f43f5e;"><i class="fas fa-sync"></i> Recarregar App</div>
+        <h2>Learn Código</h2>
+        <button class="nav-btn active" onclick="switchTab('dash', this)">
+            <i class="fas fa-home"></i> Dashboard
+        </button>
+        <button class="nav-btn" onclick="switchTab('cal', this)">
+            <i class="fas fa-calendar-alt"></i> Calendário
+        </button>
+        <button class="nav-btn" onclick="switchTab('tasks', this)">
+            <i class="fas fa-tasks"></i> Tarefas
+        </button>
+        
+        <button class="nav-btn btn-logout" onclick="location.reload()">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
     </aside>
 
-    <main class="content">
-        <div id="home" class="tab-panel active">
-            <h1>Workspace Ativo</h1>
-            <p>Clique no menu ao lado para abrir o calendário de longo prazo.</p>
+    <main class="main-content">
+        
+        <div id="dash" class="tab-content active">
+            <div class="card">
+                <h1>Bem-vindo ao seu Workspace</h1>
+                <p>Tudo pronto para os estudos de hoje.</p>
+            </div>
         </div>
 
-        <div id="calendar-tab" class="tab-panel">
-            <button class="btn-new" onclick="manualAdd()">+ Adicionar Compromisso</button>
-            <div id="calendar-wrapper">
+        <div id="cal" class="tab-content">
+            <button class="btn-add-plan" onclick="manualAdd()">+ Adicionar Plano</button>
+            <div id="calendar-container">
                 <div id="calendar"></div>
             </div>
         </div>
+
+        <div id="tasks" class="tab-content">
+            <div class="card">
+                <h2>Suas Tarefas</h2>
+                <p>Aqui você pode listar o que fazer hoje.</p>
+            </div>
+        </div>
+
     </main>
 
     <script>
         let calendar;
-        const DB_KEY = 'learn_codigo_events_v3';
 
-        // 1. Inicialização Segura
+        // Inicializa o calendário assim que a página abre
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
-            
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'pt-br',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
-                // Carrega eventos salvos
-                events: JSON.parse(localStorage.getItem(DB_KEY) || '[]'),
-                
-                // FUNÇÃO: ADICIONAR (Clique no dia)
+                events: JSON.parse(localStorage.getItem('my_events') || '[]'),
                 dateClick: function(info) {
-                    const title = prompt("O que você quer agendar para " + info.dateStr + "?");
-                    if (title) {
-                        calendar.addEvent({
-                            title: title,
-                            start: info.dateStr,
-                            allDay: true,
-                            backgroundColor: '#0ea5e9'
-                        });
-                        saveToLocal();
+                    let t = prompt("Compromisso para " + info.dateStr + ":");
+                    if(t) {
+                        calendar.addEvent({ title: t, start: info.dateStr, allDay: true });
+                        save();
                     }
                 },
-
-                // FUNÇÃO: APAGAR (Clique no evento)
                 eventClick: function(info) {
-                    if (confirm("Deseja apagar o evento: '" + info.event.title + "'?")) {
+                    if(confirm("Excluir: " + info.event.title + "?")) {
                         info.event.remove();
-                        saveToLocal();
+                        save();
                     }
                 }
             });
         });
 
-        // 2. Troca de aba com "Force Render"
-        function changeTab(tabId, element) {
-            // Esconde tudo
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            
-            // Mostra o atual
-            document.getElementById(tabId).classList.add('active');
-            element.classList.add('active');
+        // Função para trocar de aba e forçar o calendário a aparecer
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
-            // Se for o calendário, forçar o desenho na tela
-            if (tabId === 'calendar-tab') {
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+
+            if(id === 'cal') {
                 setTimeout(() => {
                     calendar.render();
                     calendar.updateSize();
@@ -137,23 +164,17 @@
             }
         }
 
-        // 3. Persistência de Dados
-        function saveToLocal() {
-            const allEvents = calendar.getEvents().map(e => ({
-                title: e.title,
-                start: e.startStr,
-                allDay: e.allDay
-            }));
-            localStorage.setItem(DB_KEY, JSON.stringify(allEvents));
+        function save() {
+            const evs = calendar.getEvents().map(e => ({ title: e.title, start: e.startStr, allDay: e.allDay }));
+            localStorage.setItem('my_events', JSON.stringify(evs));
         }
 
-        // 4. Backup: Adição via Botão
         function manualAdd() {
-            const title = prompt("Título do plano:");
-            const date = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            if (title && date) {
-                calendar.addEvent({ title: title, start: date, allDay: true });
-                saveToLocal();
+            let t = prompt("Título:");
+            let d = prompt("Data (AAAA-MM-DD):");
+            if(t && d) {
+                calendar.addEvent({ title: t, start: d, allDay: true });
+                save();
             }
         }
     </script>
