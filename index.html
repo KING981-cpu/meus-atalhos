@@ -1,26 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Monitor de Estudos Cloud</title>
+    <title>Learn Código - Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #1e3c72; --secondary: #2a5298; --accent: #00d2ff; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #333; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { background: var(--white); border-radius: 15px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
-        .main-content { max-width: 1100px; display: none; grid-template-columns: 1fr 1fr; gap: 20px; width: 95%; margin: 20px auto; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .timer-display { font-size: 3.5rem; font-weight: bold; text-align: center; color: #e74c3c; margin: 10px 0; }
-        .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-site { padding: 12px; border-radius: 8px; color: white; text-align: center; text-decoration: none; font-size: 11px; font-weight: bold; }
-        .history-item { background:#f4f7f6; padding:12px; margin-bottom:10px; border-radius:8px; border-left:5px solid var(--accent); font-size: 0.85rem; }
-        @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } }
+        :root { 
+            --bg: #f0f2f5; --sidebar-bg: #1e3c72; --card-bg: #ffffff; --text: #333; --accent: #00d2ff; 
+        }
+        body.dark-mode { 
+            --bg: #121212; --sidebar-bg: #1a1a1a; --card-bg: #242424; --text: #e0e0e0; 
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
+
+        .sidebar { 
+            width: 280px; background: var(--sidebar-bg); color: white; padding: 20px; 
+            display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+
+        .timer-box { text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .timer-display { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
+
+        .meta-progress { background: rgba(255,255,255,0.2); border-radius: 5px; height: 10px; margin: 10px 0; }
+        #meta-bar { background: var(--accent); height: 100%; width: 0%; border-radius: 5px; transition: 0.5s; }
+
+        .nav-btn { 
+            background: none; border: 1px solid rgba(255,255,255,0.3); color: white; 
+            padding: 12px; margin-bottom: 10px; border-radius: 8px; text-align: left; cursor: pointer;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-site { padding: 10px; border-radius: 6px; color: white; text-decoration: none; text-align: center; font-size: 12px; font-weight: bold; }
+
+        #login-screen { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+
+        @media (max-width: 768px) { 
+            body { flex-direction: column; } 
+            .sidebar { width: 100%; height: auto; }
+        }
     </style>
 </head>
 <body>
+<<<<<<< HEAD
 //<!-- teste -->
 <div id="login-screen" class="card">
     <h2 style="text-align:center; color:var(--primary)">Acesso aos Estudos</h2>
@@ -38,24 +70,69 @@
             <a href="https://gemini.google.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#10a37f">Gemini</a>
             <a href="https://www.estudesemfronteiras.com/" target="_blank" onclick="startTimer()" class="btn-site" style="background:#8e44ad">Sem Fronteiras</a>
         </div>
-        <div class="timer-display" id="main-timer">00:00:00</div>
-        <div style="display:flex; gap:10px; justify-content:center;">
-            <button onclick="startTimer()" style="background:#2ecc71; color:white; flex:1">PLAY</button>
-            <button onclick="pauseTimer()" style="background:#f39c12; color:white; flex:1">PAUSE</button>
-        </div>
-        <textarea id="study-note" placeholder="O que você está estudando agora? (Ex: Matemática no trabalho)"></textarea>
-        <button class="btn-primary" onclick="saveToCloud()">SALVAR NA NUVEM</button>
-        <button onclick="location.reload()" style="background: none; color: #999; font-size: 0.7rem; text-decoration: underline;">Trocar de Usuário / Sair</button>
-    </div>
+=======
 
-    <div class="card" style="max-width: 100%;">
-        <h2>📅 Histórico Sincronizado</h2>
-        <div id="history-display" style="max-height: 450px; overflow-y: auto;">Buscando seus registros na nuvem...</div>
+<div id="login-screen">
+    <div class="card" style="width: 320px;">
+        <h2 style="text-align:center" id="auth-title">Learn Código</h2>
+        <input type="text" id="username" placeholder="Usuário">
+        <input type="password" id="password" placeholder="Senha">
+        <button id="main-auth-btn" onclick="handleAuth()" style="width:100%; padding:10px; background:#1e3c72; color:white; border:none; border-radius:5px; cursor:pointer;">Entrar</button>
+        <p style="text-align:center; font-size: 0.8rem; margin-top:15px;">
+            <a href="#" id="toggle-auth" onclick="toggleAuthMode()" style="color: #1e3c72;">Não tem conta? Cadastre-se</a>
+        </p>
     </div>
 </div>
 
+<aside class="sidebar">
+    <h2 style="font-size: 1.2rem;">Workspace</h2>
+    
+    <div class="timer-box">
+>>>>>>> ae016ec22152e2cf08b2fc9c3c6663c0b843f256
+        <div class="timer-display" id="main-timer">00:00:00</div>
+        <div class="meta-progress"><div id="meta-bar"></div></div>
+        <small id="percent-text">0% da meta</small>
+    </div>
+
+    <button class="nav-btn" onclick="startTimer()">▶ Iniciar Estudo</button>
+    <button class="nav-btn" onclick="pauseTimer()">⏸ Pausar</button>
+    <button class="nav-btn" onclick="saveToCloud()" style="border-color: var(--accent);">💾 Salvar Progresso</button>
+    
+    <hr style="width:100%; opacity:0.2; margin: 20px 0;">
+    
+    <button class="nav-btn" onclick="toggleTheme()">🌓 Alternar Tema</button>
+    <button class="nav-btn" onclick="location.reload()">🚪 Sair</button>
+</aside>
+
+<main class="main-content" id="study-panel">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 300px;">
+            <div class="card">
+                <h3>🚀 Atalhos Rápidos</h3>
+                <div class="site-grid">
+                    <a href="https://chatgpt.com/" target="_blank" class="btn-site" style="background:#000000">ChatGPT</a>
+                    <a href="https://www.respostacerta.com.br/" target="_blank" class="btn-site" style="background:#e74c3c">Resposta Certa</a>
+                    <a href="https://gemini.google.com/" target="_blank" class="btn-site" style="background:#10a37f">Gemini</a>
+                    <a href="https://www.estudesemfronteiras.com/" target="_blank" class="btn-site" style="background:#8e44ad">Estude Sem Fronteiras</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📝 Notas da Sessão</h3>
+                <textarea id="study-note" placeholder="O que está aprendendo agora?" style="width:100%; height:100px; border-radius:8px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
+            </div>
+        </div>
+
+        <div style="flex: 1; min-width: 250px;">
+            <div class="card">
+                <h3>📅 Histórico Cloud</h3>
+                <div id="history-display" style="font-size: 0.85rem;"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
 <script>
-    // CONFIGURAÇÃO JÁ CONECTADA COM SEU SUPABASE
     const supabaseUrl = 'https://eprzxmdrmuvwjkxwuumj.supabase.co'; 
     const supabaseKey = 'sb_publishable_fe-zUC8N7TkMFPU2AIE36A_NQGC2zJQ';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -63,81 +140,104 @@
     let currentUser = "";
     let seconds = 0;
     let timerInterval = null;
+    let isLoginMode = true;
 
-    async function login() {
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
+
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Learn Código" : "Criar Conta";
+        document.getElementById('main-auth-btn').innerText = isLoginMode ? "Entrar" : "Cadastrar";
+        document.getElementById('toggle-auth').innerText = isLoginMode ? "Não tem conta? Cadastre-se" : "Já tem conta? Faça Login";
+    }
+
+    async function handleAuth() {
         const user = document.getElementById('username').value.trim().toLowerCase();
-        if(!user) return alert("Por favor, digite um nome!");
-        currentUser = user;
+        const pass = document.getElementById('password').value;
+
+        if(!user || !pass) return alert("Preencha todos os campos!");
+
+        if (isLoginMode) {
+            // Lógica de Login
+            const { data, error } = await _supabase.from('usuarios').select('*').eq('username', user).eq('password', pass).single();
+            if (data) {
+                currentUser = user;
+                enterWorkspace();
+            } else {
+                alert("Usuário ou senha incorretos!");
+            }
+        } else {
+            // Lógica de Cadastro
+            const { error } = await _supabase.from('usuarios').insert([{ username: user, password: pass }]);
+            if (error) {
+                alert("Erro ao cadastrar: Usuário já existe!");
+            } else {
+                alert("Cadastro realizado! Agora faça login.");
+                toggleAuthMode();
+            }
+        }
+    }
+
+    function enterWorkspace() {
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('study-panel').style.display = 'grid';
-        document.getElementById('user-display').innerText = user;
+        document.getElementById('study-panel').style.display = 'block';
         loadHistory();
     }
 
-    function startTimer() { 
-        if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); 
-    }
-    
-    function pauseTimer() { 
-        clearInterval(timerInterval); 
-        timerInterval = null; 
-    }
-    
+    function startTimer() { if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); }
+    function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
+
     function updateUI() {
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
         const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
         document.getElementById('main-timer').innerText = `${h}:${m}:${s}`;
+        
+        let percent = Math.min((seconds / 21600) * 100, 100);
+        document.getElementById('meta-bar').style.width = percent + "%";
+        document.getElementById('percent-text').innerText = Math.floor(percent) + "% da meta (6h)";
     }
 
     async function saveToCloud() {
-        if(seconds === 0) return alert("O tempo está zerado!");
+        if(seconds === 0) return alert("Cronômetro zerado!");
         const note = document.getElementById('study-note').value;
-        const tempoFinal = document.getElementById('main-timer').innerText;
-        
         const { error } = await _supabase.from('estudos').insert([
-            { 
-                usuario: currentUser, 
-                data: new Date().toLocaleDateString('pt-BR'), 
-                tempo: tempoFinal,
-                resumo: note 
-            }
+            { usuario: currentUser, data: new Date().toLocaleDateString('pt-BR'), tempo: document.getElementById('main-timer').innerText, resumo: note }
         ]);
-
-        if(error) {
-            alert("Erro ao sincronizar: " + error.message);
-        } else {
-            alert("✅ Sincronizado! Dados salvos na nuvem.");
+        if(!error) { 
+            alert("Progresso salvo!"); 
             seconds = 0; 
-            pauseTimer(); 
-            updateUI(); 
             document.getElementById('study-note').value = "";
-            loadHistory();
+            updateUI(); 
+            loadHistory(); 
         }
     }
 
     async function loadHistory() {
-        const { data, error } = await _supabase
-            .from('estudos')
-            .select('*')
-            .eq('usuario', currentUser)
-            .order('id', { ascending: false });
-        
-        const display = document.getElementById('history-display');
+        const { data } = await _supabase.from('estudos').select('*').eq('usuario', currentUser).order('id', { ascending: false });
         if(data) {
-            display.innerHTML = data.length === 0 ? "Nenhum registro encontrado para este usuário." : data.map(item => `
-                <div class="history-item">
-                    <b>${item.data}</b> — ⏱️ ${item.tempo}<br>
-                    <i style="color:#555">${item.resumo || 'Sem observações'}</i>
-                </div>
+            document.getElementById('history-display').innerHTML = data.map(item => `
+                <div style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #eee;">
+    <b>${item.data}</b>: ${item.tempo}<br>
+    <small>${item.resumo || ''}</small><br>
+    <button onclick="deleteHistory(${item.id})" style="color: red; cursor: pointer;">Excluir</button>
+</div>
             `).join('');
         }
     }
+    async function deleteHistory(id) {
+    const { error } = await _supabase
+        .from('estudos')
+        .delete()
+        .eq('id', id);
 
-    window.onbeforeunload = function() {
-        if (seconds > 0) return "Você tem um tempo não salvo. Deseja realmente sair?";
-    };
+    if (error) {
+        console.error('Erro ao deletar:', error.message);
+    } else {
+        alert('Registro excluído com sucesso!');
+        loadHistory(); // Recarrega a lista automaticamente
+    }
+}
 </script>
 </body>
 </html>
-
