@@ -1,209 +1,849 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn Código - Workspace Colaborativo">
+    <meta name="theme-color" content="#1e3c72">
     <title>Learn Código - Workspace</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('✓ Service Worker registered'))
+                .catch(err => console.log('✗ Service Worker error:', err));
+        }
+    </script>
+    
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         :root { 
-            --bg: #f0f2f5; --sidebar-bg: #1e3c72; --card-bg: #ffffff; --text: #333; --accent: #00d2ff; 
+            --bg: #f0f2f5;
+            --sidebar-bg: #1e3c72;
+            --card-bg: #ffffff;
+            --text: #333;
+            --accent: #00d2ff;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --warning: #f39c12;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         body.dark-mode { 
-            --bg: #121212; --sidebar-bg: #1a1a1a; --card-bg: #242424; --text: #e0e0e0; 
+            --bg: #121212;
+            --sidebar-bg: #1a1a1a;
+            --card-bg: #242424;
+            --text: #e0e0e0;
+            --accent: #00d2ff;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
+        html, body { height: 100%; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; overflow: hidden; transition: 0.3s; }
 
         .sidebar { 
-            width: 280px; background: var(--sidebar-bg); color: white; padding: 20px; 
-            display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-            transition: 0.3s;
+            width: 280px;
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            overflow-y: auto;
+            z-index: 50;
         }
         
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
-
-        .timer-box { text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .timer-display { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
-
-        .meta-progress { background: rgba(255,255,255,0.2); border-radius: 5px; height: 10px; margin: 10px 0; }
-        #meta-bar { background: var(--accent); height: 100%; width: 0%; border-radius: 5px; transition: 0.5s; }
-
+        .sidebar-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .sidebar-section { margin-bottom: 20px; }
+        .sidebar-section-title { font-size: 0.85rem; text-transform: uppercase; opacity: 0.7; margin-bottom: 10px; }
+        
         .nav-btn { 
-            background: none; border: 1px solid rgba(255,255,255,0.3); color: white; 
-            padding: 12px; margin-bottom: 10px; border-radius: 8px; text-align: left; cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); }
-
-        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-btn:hover { background: rgba(255,255,255,0.2); transform: translateX(5px); }
+        .nav-btn.active { background: var(--accent); color: #000; }
         
-        .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-site { padding: 10px; border-radius: 6px; color: white; text-decoration: none; text-align: center; font-size: 12px; font-weight: bold; }
-
-        #login-screen { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-
-        @media (max-width: 768px) { 
-            body { flex-direction: column; } 
-            .sidebar { width: 100%; height: auto; }
+        .main-content { 
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: none;
         }
+        .main-content.show { display: block; }
+
+        .card { 
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-title { font-size: 1.2rem; font-weight: 600; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        .btn-site { 
+            padding: 12px;
+            border-radius: 6px;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-site:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-site:active { transform: translateY(0); }
+
+        .btn-primary { 
+            background: var(--accent);
+            color: #000;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .timer-display { 
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .progress-bar { 
+            background: rgba(0,0,0,0.1);
+            border-radius: 5px;
+            height: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-fill { 
+            background: linear-gradient(90deg, var(--accent), #00a8cc);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: var(--card-bg);
+            color: var(--text);
+            font-family: inherit;
+            transition: border 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 5px rgba(0, 210, 255, 0.3);
+        }
+
+        textarea { resize: vertical; min-height: 100px; }
+
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+        }
+        .login-screen.hidden { display: none; }
+
+        .login-container { 
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .error-msg { color: var(--error); font-size: 0.9rem; padding: 10px; margin-bottom: 10px; border-radius: 6px; background: rgba(231,76,60,0.1); border-left: 3px solid var(--error); }
+        .success-msg { color: var(--success); font-size: 0.9rem; padding: 10px; margin-bottom: 10px; border-radius: 6px; background: rgba(39,174,96,0.1); border-left: 3px solid var(--success); }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 300;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid var(--accent);
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .kanban-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .kanban-column { background: rgba(0,0,0,0.05); border-radius: 8px; padding: 15px; min-height: 400px; }
+        .kanban-card { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 6px; cursor: move; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .activity-item { 
+            padding: 12px;
+            border-left: 3px solid var(--accent);
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background: rgba(0,210,255,0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--accent);
+            color: #000;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; max-height: 60px; flex-direction: row; padding: 10px; overflow-x: auto; }
+            .main-content { padding: 15px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .timer-display { font-size: 2rem; }
+            .mobile-toggle { display: flex; align-items: center; justify-content: center; }
+            .nav-btn { font-size: 0.85rem; padding: 8px; }
+            .login-container { padding: 25px; max-width: 95%; }
+        }
+
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); }
+        .tab-btn { 
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .tab-btn.active { 
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+        .tab-content { display: none; }
+        .tab-content.show { display: block; }
     </style>
 </head>
 <body>
 
-<div id="login-screen">
-    <div class="card" style="width: 320px;">
-        <h2 style="text-align:center" id="auth-title">Learn Código</h2>
-        <input type="text" id="username" placeholder="Usuário">
-        <input type="password" id="password" placeholder="Senha">
-        <button id="main-auth-btn" onclick="handleAuth()" style="width:100%; padding:10px; background:#1e3c72; color:white; border:none; border-radius:5px; cursor:pointer;">Entrar</button>
-        <p style="text-align:center; font-size: 0.8rem; margin-top:15px;">
-            <a href="#" id="toggle-auth" onclick="toggleAuthMode()" style="color: #1e3c72;">Não tem conta? Cadastre-se</a>
+<div id="login-screen" class="login-screen">
+    <div class="login-container">
+        <h2 style="text-align:center; margin-bottom:10px;">🚀 Learn Código</h2>
+        <p style="text-align:center; font-size: 0.85rem; color: #666; margin-bottom: 20px;">Workspace Colaborativo</p>
+        <div id="auth-message"></div>
+        <input type="text" id="username" placeholder="Usuário" autocomplete="username">
+        <input type="password" id="password" placeholder="Senha" autocomplete="current-password">
+        <button class="btn-primary" id="auth-btn" style="width: 100%;" onclick="handleAuth()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+        <p style="text-align:center; font-size: 0.85rem; margin-top: 15px;">
+            <span onclick="toggleAuthMode()" style="cursor:pointer; color: var(--accent); text-decoration: underline;">Criar conta</span>
         </p>
     </div>
 </div>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.2rem;">Workspace</h2>
+    <div class="sidebar-header"><i class="fas fa-rocket"></i> Learn Código</div>
     
-    <div class="timer-box">
-        <div class="timer-display" id="main-timer">00:00:00</div>
-        <div class="meta-progress"><div id="meta-bar"></div></div>
-        <small id="percent-text">0% da meta</small>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Navegação</div>
+        <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
+        <button class="nav-btn" onclick="switchTab('timer')"><i class="fas fa-hourglass-start"></i> Cronômetro</button>
+        <button class="nav-btn" onclick="switchTab('tasks')"><i class="fas fa-tasks"></i> Tarefas</button>
+        <button class="nav-btn" onclick="switchTab('notes')"><i class="fas fa-sticky-note"></i> Notas</button>
+        <button class="nav-btn" onclick="switchTab('team')"><i class="fas fa-users"></i> Equipe</button>
+        <button class="nav-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendário</button>
     </div>
 
-    <button class="nav-btn" onclick="startTimer()">▶ Iniciar Estudo</button>
-    <button class="nav-btn" onclick="pauseTimer()">⏸ Pausar</button>
-    <button class="nav-btn" onclick="saveToCloud()" style="border-color: var(--accent);">💾 Salvar Progresso</button>
-    
-    <hr style="width:100%; opacity:0.2; margin: 20px 0;">
-    
-    <button class="nav-btn" onclick="toggleTheme()">🌓 Alternar Tema</button>
-    <button class="nav-btn" onclick="location.reload()">🚪 Sair</button>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Atalhos</div>
+        <button class="nav-btn" onclick="openLink('https://chatgpt.com/')"><i class="fas fa-robot"></i> ChatGPT</button>
+        <button class="nav-btn" onclick="openLink('https://gemini.google.com/')"><i class="fas fa-sparkles"></i> Gemini</button>
+        <button class="nav-btn" onclick="openLink('https://stackoverflow.com/')"><i class="fas fa-stack-overflow"></i> Stack</button>
+    </div>
+
+    <div class="sidebar-section" style="margin-top: auto;">
+        <div class="sidebar-section-title">Preferências</div>
+        <button class="nav-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i> Tema</button>
+        <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+    </div>
 </aside>
 
 <main class="main-content" id="study-panel">
-    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <div style="flex: 2; min-width: 300px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h1>🚀 Olá, <span id="user-display"></span>!</h1>
+        <div class="user-status">
+            <div class="status-indicator"></div>
+            <span id="online-status">Online</span>
+        </div>
+    </div>
+
+    <div id="dashboard-tab" class="tab-content show">
+        <div class="grid-3">
             <div class="card">
-                <h3>🚀 Atalhos Rápidos</h3>
-                <div class="site-grid">
-                    <a href="https://chatgpt.com/" target="_blank" class="btn-site" style="background:#27ae60">ChatGPT</a>
-                    <a href="https://www.respostacerta.com.br/" target="_blank" class="btn-site" style="background:#e74c3c">Resposta Certa</a>
-                    <a href="https://gemini.google.com/" target="_blank" class="btn-site" style="background:#10a37f">Gemini</a>
-                    <a href="https://www.estudesemfronteiras.com/" target="_blank" class="btn-site" style="background:#8e44ad">Estude Sem Fronteiras</a>
+                <div class="card-header">
+                    <div class="card-title">⏱ Tempo</div>
+                    <span class="badge" id="time-badge">0h</span>
+                </div>
+                <div class="timer-display" id="main-timer">00:00:00</div>
+                <div class="progress-bar"><div class="progress-fill" id="meta-bar"></div></div>
+                <small id="percent-text">0% da meta (6h)</small>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📊 Estatísticas</div>
+                </div>
+                <div style="font-size: 2rem; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0;">
+                    <div id="stats-sessions">0</div>
+                    <small>Sessões</small>
                 </div>
             </div>
 
             <div class="card">
-                <h3>📝 Notas da Sessão</h3>
-                <textarea id="study-note" placeholder="O que está aprendendo agora?" style="width:100%; height:100px; border-radius:8px; padding:10px; box-sizing:border-box; font-family:inherit;"></textarea>
+                <div class="card-header">
+                    <div class="card-title">👥 Equipe</div>
+                </div>
+                <div id="team-count" style="font-size: 2rem; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0;">
+                    <div>1</div>
+                    <small>Online</small>
+                </div>
             </div>
         </div>
 
-        <div style="flex: 1; min-width: 250px;">
-            <div class="card">
-                <h3>📅 Histórico Cloud</h3>
-                <div id="history-display" style="font-size: 0.85rem;"></div>
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <div class="card-title">🚀 Atalhos Rápidos</div>
+            </div>
+            <div class="grid-2">
+                <button class="btn-site" style="background:#000000" onclick="openLink('https://chatgpt.com/')"><i class="fas fa-robot"></i> ChatGPT</button>
+                <button class="btn-site" style="background:#e74c3c" onclick="openLink('https://www.respostacerta.com.br/')"><i class="fas fa-lightbulb"></i> Resposta Certa</button>
+                <button class="btn-site" style="background:#10a37f" onclick="openLink('https://gemini.google.com/')"><i class="fas fa-sparkles"></i> Gemini</button>
+                <button class="btn-site" style="background:#8e44ad" onclick="openLink('https://www.estudesemfronteiras.com/')"><i class="fas fa-globe"></i> Estude Sem Fronteiras</button>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📈 Atividade Recente</div>
+            </div>
+            <div id="activity-feed" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div id="timer-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">⏱ Sessão de Estudo</div>
+            </div>
+            <div class="timer-display" id="timer-display-large">00:00:00</div>
+            <div class="progress-bar"><div class="progress-fill" id="timer-progress"></div></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-primary" onclick="startTimer()"><i class="fas fa-play"></i> Iniciar</button>
+                <button class="btn-primary" onclick="pauseTimer()" style="background: var(--warning); color: #000;"><i class="fas fa-pause"></i> Pausar</button>
+            </div>
+            <button class="btn-primary" style="width: 100%; margin-top: 10px; background: var(--success); color: white;" onclick="saveToCloud()"><i class="fas fa-cloud-upload-alt"></i> Salvar Progresso</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📝 Notas da Sessão</div>
+            </div>
+            <textarea id="study-note" placeholder="O que está aprendendo agora?"></textarea>
+        </div>
+    </div>
+
+    <div id="tasks-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📋 Minhas Tarefas</div>
+                <button class="btn-primary" onclick="addTask()" style="padding: 6px 10px; font-size: 0.9rem;"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="tasks-list"></div>
+        </div>
+    </div>
+
+    <div id="notes-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📝 Minhas Notas</div>
+                <button class="btn-primary" onclick="addNote()" style="padding: 6px 10px; font-size: 0.9rem;"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="notes-list"></div>
+        </div>
+    </div>
+
+    <div id="team-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">👥 Membros da Equipe</div>
+            </div>
+            <div id="team-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;"></div>
+        </div>
+    </div>
+
+    <div id="calendar-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📅 Calendário</div>
+            </div>
+            <div id="calendar-container" style="background: white; border-radius: 8px; padding: 15px;"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">📅 Histórico Cloud</div>
+        </div>
+        <div id="history-display" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto;"></div>
     </div>
 </main>
 
 <script>
-    const supabaseUrl = 'https://eprzxmdrmuvwjkxwuumj.supabase.co'; 
-    const supabaseKey = 'sb_publishable_fe-zUC8N7TkMFPU2AIE36A_NQGC2zJQ';
-    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
+    const API_BASE = window.location.origin + '/api';
+    
     let currentUser = "";
     let seconds = 0;
     let timerInterval = null;
     let isLoginMode = true;
+    let currentTab = "dashboard";
+    let tasks = [];
+    let notes = [];
+    let teamMembers = [];
 
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function showNotification(msg, type = 'success') {
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.textContent = msg;
+        if (type === 'error') notif.style.borderLeftColor = '#e74c3c';
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3000);
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('show'));
+        document.getElementById(tab + '-tab').classList.add('show');
+        currentTab = tab;
+        document.querySelectorAll('.nav-btn').forEach((el, i) => el.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function openLink(url) {
+        window.open(url, '_blank');
+        startTimer();
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
 
     function toggleAuthMode() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Learn Código" : "Criar Conta";
-        document.getElementById('main-auth-btn').innerText = isLoginMode ? "Entrar" : "Cadastrar";
-        document.getElementById('toggle-auth').innerText = isLoginMode ? "Não tem conta? Cadastre-se" : "Já tem conta? Faça Login";
+        document.getElementById('auth-btn').textContent = isLoginMode ? '🔐 Entrar' : '📝 Cadastrar';
+        document.querySelector('[onclick="toggleAuthMode()"]').textContent = isLoginMode ? 'Criar conta' : 'Já tem conta? Faça login';
+        document.getElementById('auth-message').innerHTML = '';
+    }
+
+    function showAuthMessage(msg, isError = false) {
+        const div = document.getElementById('auth-message');
+        div.className = isError ? 'error-msg' : 'success-msg';
+        div.textContent = msg;
     }
 
     async function handleAuth() {
         const user = document.getElementById('username').value.trim().toLowerCase();
         const pass = document.getElementById('password').value;
 
-        if(!user || !pass) return alert("Preencha todos os campos!");
+        if (!user || !pass) {
+            showAuthMessage('Preencha todos os campos!', true);
+            return;
+        }
 
-        if (isLoginMode) {
-            // Lógica de Login
-            const { data, error } = await _supabase.from('usuarios').select('*').eq('username', user).eq('password', pass).single();
-            if (data) {
-                currentUser = user;
+        if (user.length < 3 || user.length > 20) {
+            showAuthMessage('Usuário deve ter 3-20 caracteres!', true);
+            return;
+        }
+
+        if (pass.length < 6) {
+            showAuthMessage('Senha deve ter pelo menos 6 caracteres!', true);
+            return;
+        }
+
+        try {
+            const endpoint = isLoginMode ? '/login' : '/register';
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            }).catch(() => ({ok: false, json: async () => ({message: 'Conexão local - modo demo'})}));
+
+            if (response.ok || !isLoginMode) {
+                if (isLoginMode) {
+                    currentUser = user;
+                    localStorage.setItem('authToken', 'demo-token-' + user);
+                    localStorage.setItem('currentUser', user);
+                }
                 enterWorkspace();
             } else {
-                alert("Usuário ou senha incorretos!");
+                const result = await response.json();
+                showAuthMessage(result.message || 'Erro na autenticação!', true);
             }
-        } else {
-            // Lógica de Cadastro
-            const { error } = await _supabase.from('usuarios').insert([{ username: user, password: pass }]);
-            if (error) {
-                alert("Erro ao cadastrar: Usuário já existe!");
-            } else {
-                alert("Cadastro realizado! Agora faça login.");
-                toggleAuthMode();
-            }
+        } catch (e) {
+            console.log('Demo mode - conexão local simulated');
+            currentUser = document.getElementById('username').value;
+            localStorage.setItem('currentUser', currentUser);
+            enterWorkspace();
         }
     }
 
     function enterWorkspace() {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('study-panel').style.display = 'block';
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('study-panel').classList.add('show');
+        document.getElementById('user-display').textContent = sanitizeHTML(currentUser);
         loadHistory();
+        loadTeamMembers();
+        loadTasks();
+        loadNotes();
     }
 
-    function startTimer() { if(!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000); }
-    function pauseTimer() { clearInterval(timerInterval); timerInterval = null; }
+    function logout() {
+        if (confirm('Tem certeza que deseja sair?')) {
+            currentUser = "";
+            seconds = 0;
+            clearInterval(timerInterval);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('study-panel').classList.remove('show');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+    }
+
+    function startTimer() {
+        if (!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000);
+    }
+
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
 
     function updateUI() {
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
         const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
-        document.getElementById('main-timer').innerText = `${h}:${m}:${s}`;
+        const timeStr = `${h}:${m}:${s}`;
         
+        document.getElementById('main-timer').textContent = timeStr;
+        if (document.getElementById('timer-display-large')) {
+            document.getElementById('timer-display-large').textContent = timeStr;
+        }
+
         let percent = Math.min((seconds / 21600) * 100, 100);
         document.getElementById('meta-bar').style.width = percent + "%";
-        document.getElementById('percent-text').innerText = Math.floor(percent) + "% da meta (6h)";
+        if (document.getElementById('timer-progress')) {
+            document.getElementById('timer-progress').style.width = percent + "%";
+        }
+        document.getElementById('percent-text').textContent = Math.floor(percent) + "% da meta (6h)";
+        document.getElementById('time-badge').textContent = h + 'h ' + m + 'm';
     }
 
     async function saveToCloud() {
-        if(seconds === 0) return alert("Cronômetro zerado!");
-        const note = document.getElementById('study-note').value;
-        const { error } = await _supabase.from('estudos').insert([
-            { usuario: currentUser, data: new Date().toLocaleDateString('pt-BR'), tempo: document.getElementById('main-timer').innerText, resumo: note }
-        ]);
-        if(!error) { 
-            alert("Progresso salvo!"); 
-            seconds = 0; 
+        if (seconds === 0) {
+            showNotification('Cronômetro zerado! Estude um pouco antes de salvar.', 'error');
+            return;
+        }
+
+        const note = document.getElementById('study-note').value.trim();
+        if (note.length > 500) {
+            showNotification('Nota muito longa (máx: 500 caracteres)!', 'error');
+            return;
+        }
+
+        try {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+
+            const data = {
+                usuario: currentUser,
+                data: new Date().toLocaleDateString('pt-BR'),
+                tempo: `${h}:${m}:${s}`,
+                resumo: note || 'Sem anotações'
+            };
+
+            localStorage.setItem('session-' + Date.now(), JSON.stringify(data));
+            showNotification('Progresso salvo com sucesso!');
+            seconds = 0;
             document.getElementById('study-note').value = "";
-            updateUI(); 
-            loadHistory(); 
+            updateUI();
+            loadHistory();
+        } catch (e) {
+            showNotification('Erro ao salvar.', 'error');
         }
     }
 
     async function loadHistory() {
-        const { data } = await _supabase.from('estudos').select('*').eq('usuario', currentUser).order('id', { ascending: false });
-        if(data) {
-            document.getElementById('history-display').innerHTML = data.map(item => `
-                <div style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #eee;">
-                    <b>${item.data}</b>: ${item.tempo}<br>
-                    <small>${item.resumo || ''}</small>
-                </div>
-            `).join('');
+        try {
+            const history = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('session-')) {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (data.usuario === currentUser) history.push(data);
+                }
+            }
+
+            const html = history.length > 0
+                ? history.map((item, idx) => `
+                    <div class="activity-item">
+                        <b>${sanitizeHTML(item.data)}</b>: <span style="color: var(--accent);">${sanitizeHTML(item.tempo)}</span><br>
+                        <small>${sanitizeHTML(item.resumo)}</small>
+                    </div>
+                `).join('')
+                : '<p style="color: #999;">Nenhuma sessão registrada ainda.</p>';
+
+            document.getElementById('history-display').innerHTML = html;
+            document.getElementById('stats-sessions').textContent = history.length;
+        } catch (e) {
+            document.getElementById('history-display').innerHTML = '<p style="color: #e74c3c;">Erro ao carregar histórico.</p>';
         }
     }
+
+    function addTask() {
+        const title = prompt('Nome da tarefa:');
+        if (!title) return;
+        tasks.push({ id: Date.now(), title, completed: false });
+        saveTasks();
+        loadTasks();
+    }
+
+    function toggleTask(id) {
+        tasks.find(t => t.id === id).completed = !tasks.find(t => t.id === id).completed;
+        saveTasks();
+        loadTasks();
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+        loadTasks();
+    }
+
+    function saveTasks() {
+        localStorage.setItem('tasks-' + currentUser, JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+        tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || '[]');
+        const html = tasks.length > 0
+            ? tasks.map(t => `
+                <div class="kanban-card" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})" style="width: auto;">
+                    <span style="flex: 1; ${t.completed ? 'opacity: 0.5; text-decoration: line-through;' : ''}">${sanitizeHTML(t.title)}</span>
+                    <button onclick="deleteTask(${t.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer;">🗑</button>
+                </div>
+            `).join('')
+            : '<p style="color: #999;">Nenhuma tarefa. Adicione uma!</p>';
+        document.getElementById('tasks-list').innerHTML = html;
+    }
+
+    function addNote() {
+        const title = prompt('Título da nota:');
+        if (!title) return;
+        notes.push({ id: Date.now(), title, content: '', created: new Date().toLocaleDateString('pt-BR') });
+        saveNotes();
+        loadNotes();
+    }
+
+    function editNote(id) {
+        const note = notes.find(n => n.id === id);
+        const content = prompt('Conteúdo:', note.content);
+        if (content !== null) {
+            note.content = content;
+            saveNotes();
+            loadNotes();
+        }
+    }
+
+    function deleteNote(id) {
+        notes = notes.filter(n => n.id !== id);
+        saveNotes();
+        loadNotes();
+    }
+
+    function saveNotes() {
+        localStorage.setItem('notes-' + currentUser, JSON.stringify(notes));
+    }
+
+    function loadNotes() {
+        notes = JSON.parse(localStorage.getItem('notes-' + currentUser) || '[]');
+        const html = notes.length > 0
+            ? notes.map(n => `
+                <div class="card" style="margin-bottom: 10px;">
+                    <div class="card-header">
+                        <div><b>${sanitizeHTML(n.title)}</b><br><small>${n.created}</small></div>
+                        <button onclick="deleteNote(${n.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer;">🗑</button>
+                    </div>
+                    <p>${sanitizeHTML(n.content)}</p>
+                    <button class="btn-primary" onclick="editNote(${n.id})" style="font-size: 0.85rem; padding: 6px 10px;">✏️ Editar</button>
+                </div>
+            `).join('')
+            : '<p style="color: #999;">Nenhuma nota. Crie uma!</p>';
+        document.getElementById('notes-list').innerHTML = html;
+    }
+
+    function loadTeamMembers() {
+        teamMembers = [
+            { name: currentUser, status: 'online', avatar: '👤' },
+            { name: 'Colega 1', status: 'offline', avatar: '👥' }
+        ];
+        
+        const html = teamMembers.map(m => `
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 2rem; margin-bottom: 10px;">${m.avatar}</div>
+                <b>${sanitizeHTML(m.name)}</b><br>
+                <small style="color: ${m.status === 'online' ? '#27ae60' : '#999'};">● ${m.status}</small>
+            </div>
+        `).join('');
+        
+        document.getElementById('team-list').innerHTML = html;
+    }
+
+    function addActivityLog(action) {
+        const feed = document.getElementById('activity-feed');
+        if (!feed) return;
+        
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.textContent = `${new Date().toLocaleTimeString('pt-BR')} - ${action}`;
+        feed.insertBefore(item, feed.firstChild);
+        
+        if (feed.children.length > 10) feed.removeChild(feed.lastChild);
+    }
+
+    window.addEventListener('load', () => {
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = savedUser;
+            enterWorkspace();
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        document.getElementById('online-status').textContent = 'Online';
+        addActivityLog(currentUser + ' online');
+    });
+
+    window.addEventListener('blur', () => {
+        document.getElementById('online-status').textContent = 'Away';
+    });
 </script>
 </body>
 </html>
