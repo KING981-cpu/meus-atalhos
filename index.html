@@ -3,260 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Learn Código - Workspace Colaborativo">
-    <meta name="theme-color" content="#1e3c72">
-    <title>Learn Código - Workspace</title>
+    <title>Learn Código - Workspace Pro</title>
     
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root { 
-            --bg: #f0f2f5;
-            --sidebar-bg: #1e3c72;
-            --card-bg: #ffffff;
-            --text: #333;
-            --accent: #00d2ff;
-            --success: #27ae60;
-            --error: #e74c3c;
-            --warning: #f39c12;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        body.dark-mode { 
-            --bg: #121212;
-            --sidebar-bg: #1a1a1a;
-            --card-bg: #242424;
-            --text: #e0e0e0;
+            --bg: #121212; --sidebar-bg: #1a1a1a; --card-bg: #242424; 
+            --text: #e0e0e0; --accent: #00d2ff; --success: #27ae60; --shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
-        html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; transition: 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* LOGIN SCREEN */
-        .login-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
+        /* Login */
+        .login-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #1e3c72, #2a5298); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .login-screen.hidden { display: none; }
-        .login-container { 
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+        .login-container { background: var(--card-bg); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
 
-        /* SIDEBAR */
-        .sidebar { 
-            width: 280px;
-            background: var(--sidebar-bg);
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            z-index: 150;
-            transition: transform 0.3s ease;
-        }
-        .sidebar-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; margin: 15px 0 10px; }
-        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar-bg); padding: 20px; display: flex; flex-direction: column; transition: 0.3s; z-index: 100; }
         .nav-btn { 
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            text-align: left;
-            cursor: pointer;
-            width: 100%;
-            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.05); border: none; color: white; padding: 12px; 
+            margin-bottom: 8px; border-radius: 8px; cursor: pointer; text-align: left; width: 100%;
+            display: flex; align-items: center; gap: 10px; transition: 0.2s;
         }
-        .nav-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+        .nav-btn:hover, .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* MAIN CONTENT */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+        /* Main */
+        .main-content { flex: 1; padding: 25px; overflow-y: auto; display: none; }
         .main-content.show { display: block; }
-        
         .tab-content { display: none; }
         .tab-content.show { display: block; }
 
-        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid #333; }
+        
+        /* Calendário Styles */
+        #calendar { background: #fff; color: #333; padding: 15px; border-radius: 8px; min-height: 500px; }
+        .fc-header-toolbar { margin-bottom: 10px !important; }
 
-        /* FORM ELEMENTS */
-        input, textarea { 
-            width: 100%; padding: 12px; margin-bottom: 10px; 
-            border-radius: 8px; border: 1px solid #ddd; background: var(--card-bg); color: var(--text);
-        }
-        .btn-primary { 
-            background: var(--accent); border: none; padding: 12px; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; width: 100%;
-        }
+        /* Inputs */
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; }
+        .btn-primary { background: var(--accent); border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
 
-        /* TIMER */
-        .timer-display { font-size: 3rem; text-align: center; font-family: monospace; color: var(--accent); margin: 15px 0; }
-        .progress-bar { background: rgba(0,0,0,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
-        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: 0.3s; }
-
-        /* MOBILE OPTIMIZATION */
-        .mobile-toggle {
-            display: none; position: fixed; bottom: 20px; right: 20px;
-            width: 60px; height: 60px; border-radius: 50%; background: var(--accent);
-            z-index: 200; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: none; font-size: 24px;
-        }
-
+        /* Responsividade */
         @media (max-width: 768px) {
-            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
-            .sidebar.active { transform: translateX(0); }
-            .mobile-toggle { display: flex; align-items: center; justify-content: center; }
-            .grid-2, .grid-3 { grid-template-columns: 1fr; }
-            .main-content { padding: 15px; padding-bottom: 100px; }
+            .sidebar { position: fixed; left: -260px; height: 100%; }
+            .sidebar.active { left: 0; }
+            .mobile-toggle { display: flex; }
         }
-
-        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: white; border-left: 5px solid var(--success); box-shadow: var(--shadow); z-index: 2000; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .mobile-toggle { display: none; position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: var(--accent); z-index: 200; border: none; font-size: 20px; align-items: center; justify-content: center; cursor: pointer; }
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
     <div id="login-screen" class="login-screen">
         <div class="login-container">
-            <h2 style="text-align:center; margin-bottom:10px;">🚀 Learn Código</h2>
-            <p style="text-align:center; font-size: 0.85rem; opacity: 0.7; margin-bottom: 20px;">Workspace Colaborativo</p>
-            <div id="auth-message" style="margin-bottom: 10px; text-align: center;"></div>
-            <input type="text" id="username" placeholder="Usuário">
-            <input type="password" id="password" placeholder="Senha">
-            <button class="btn-primary" onclick="handleAuth()" id="auth-btn">Entrar</button>
-            <p style="text-align:center; margin-top: 15px; font-size: 0.9rem;">
-                <span onclick="toggleAuthMode()" style="cursor:pointer; color: var(--accent); text-decoration: underline;">Criar conta</span>
-            </p>
+            <h2>🚀 Learn Código</h2>
+            <p style="margin-bottom: 20px; opacity: 0.7;">Organização a longo prazo</p>
+            <input type="text" id="username" placeholder="Seu nome de usuário">
+            <button class="btn-primary" onclick="handleAuth()">Acessar Workspace</button>
         </div>
     </div>
 
     <aside class="sidebar" id="app-sidebar">
-        <div class="sidebar-header"><i class="fas fa-rocket"></i> Learn Código</div>
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Navegação</div>
-            <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
-            <button class="nav-btn" onclick="switchTab('timer')"><i class="fas fa-hourglass-start"></i> Cronômetro</button>
-            <button class="nav-btn" onclick="switchTab('tasks')"><i class="fas fa-tasks"></i> Tarefas</button>
-            <button class="nav-btn" onclick="switchTab('team')"><i class="fas fa-users"></i> Equipe</button>
-        </div>
-        <div class="sidebar-section" style="margin-top: auto;">
-            <button class="nav-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i> Tema</button>
-            <button class="nav-btn" onclick="logout()" style="color: #ff7675;"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        <h2 style="margin-bottom: 25px;"><i class="fas fa-rocket"></i> Learn</h2>
+        <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-home"></i> Home</button>
+        <button class="nav-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendário</button>
+        <button class="nav-btn" onclick="switchTab('tasks')"><i class="fas fa-check-double"></i> Tarefas</button>
+        <div style="margin-top: auto;">
+            <button class="nav-btn" onclick="logout()" style="color: #ff4d4d;"><i class="fas fa-sign-out-alt"></i> Sair</button>
         </div>
     </aside>
 
     <main class="main-content" id="study-panel">
-        <header style="margin-bottom: 25px;">
-            <h1>Olá, <span id="user-display"></span>!</h1>
-        </header>
-
+        
         <div id="dashboard-tab" class="tab-content show">
-            <div class="grid-3">
-                <div class="card">
-                    <h3>⏱ Tempo Hoje</h3>
-                    <div class="timer-display" id="main-timer">00:00:00</div>
-                    <div class="progress-bar"><div class="progress-fill" id="meta-bar"></div></div>
-                    <small id="percent-text">0% da meta (6h)</small>
-                </div>
-                <div class="card">
-                    <h3>👥 Equipe</h3>
-                    <div style="font-size: 2.5rem; text-align: center; margin: 10px 0;">1</div>
-                    <p style="text-align: center;">Online agora</p>
-                </div>
-                <div class="card">
-                    <h3>📊 Sessões</h3>
-                    <div id="stats-sessions" style="font-size: 2.5rem; text-align: center; margin: 10px 0;">0</div>
-                    <p style="text-align: center;">Salvas</p>
-                </div>
+            <div class="card">
+                <h1>Bem-vindo, <span id="user-display"></span>!</h1>
+                <p>Aqui está o resumo do seu planejamento.</p>
             </div>
             <div class="card">
-                <h3>📈 Atividade Recente</h3>
-                <div id="activity-feed" style="margin-top: 10px;"></div>
+                <h3>💡 Dica de Planejamento</h3>
+                <p>Use o calendário para metas de longo prazo (provas, entregas) e as tarefas para o dia a dia.</p>
             </div>
         </div>
 
-        <div id="timer-tab" class="tab-content">
+        <div id="calendar-tab" class="tab-content">
             <div class="card">
-                <div class="timer-display" id="timer-display-large">00:00:00</div>
-                <div class="grid-2">
-                    <button class="btn-primary" onclick="startTimer()"><i class="fas fa-play"></i> Iniciar</button>
-                    <button class="btn-primary" onclick="pauseTimer()" style="background: var(--warning);"><i class="fas fa-pause"></i> Pausar</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2>📅 Planejamento Mensal</h2>
+                    <button class="btn-primary" style="width: auto; padding: 8px 15px;" onclick="addEvent()">+ Novo Plano</button>
                 </div>
-                <button class="btn-primary" style="margin-top: 10px; background: var(--success); color: white;" onclick="saveToCloud()">
-                    <i class="fas fa-cloud-upload-alt"></i> Salvar Progresso
-                </button>
+                <div id="calendar"></div>
             </div>
-            <textarea id="study-note" placeholder="O que você está aprendendo?"></textarea>
         </div>
 
         <div id="tasks-tab" class="tab-content">
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3>📋 Minhas Tarefas</h3>
-                    <button onclick="addTask()" class="btn-primary" style="width: auto; padding: 5px 15px;">+</button>
-                </div>
-                <div id="tasks-list"></div>
+                <h2>📋 Tarefas Rápidas</h2>
+                <div id="tasks-list" style="margin-top: 15px;"></div>
+                <button class="btn-primary" onclick="addTask()" style="margin-top: 10px;">+ Adicionar Tarefa</button>
             </div>
         </div>
 
-        <div id="team-tab" class="tab-content">
-            <div class="card">
-                <h3>👥 Membros Online</h3>
-                <div id="team-list" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;"></div>
-            </div>
-        </div>
     </main>
 
-    <button class="mobile-toggle" onclick="toggleMenu()">
-        <i class="fas fa-bars"></i>
-    </button>
+    <button class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
     <script>
         let currentUser = "";
-        let seconds = 0;
-        let timerInterval = null;
-        let isLoginMode = true;
+        let calendar;
 
-        function toggleMenu() {
-            document.getElementById('app-sidebar').classList.toggle('active');
-        }
+        function toggleMenu() { document.getElementById('app-sidebar').classList.toggle('active'); }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('show'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tab + '-tab').classList.add('show');
             event.currentTarget.classList.add('active');
+            
+            // Renderiza o calendário se a aba for aberta
+            if(tab === 'calendar') {
+                setTimeout(() => calendar.render(), 100);
+            }
             if(window.innerWidth <= 768) toggleMenu();
         }
 
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-btn').textContent = isLoginMode ? 'Entrar' : 'Cadastrar';
-            document.querySelector('[onclick="toggleAuthMode()"]').textContent = isLoginMode ? 'Criar conta' : 'Já tem conta? Login';
-        }
-
         function handleAuth() {
-            const user = document.getElementById('username').value.trim();
-            if(user.length < 3) return alert("Usuário muito curto!");
-            
+            const user = document.getElementById('username').value;
+            if(!user) return alert("Digite seu nome!");
             currentUser = user;
             localStorage.setItem('currentUser', user);
             enterWorkspace();
@@ -266,78 +143,42 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('study-panel').classList.add('show');
             document.getElementById('user-display').textContent = currentUser;
+            initCalendar();
             loadTasks();
-            loadHistory();
-            loadTeamMembers();
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            location.reload();
-        }
-
-        function startTimer() {
-            if (timerInterval) return;
-            timerInterval = setInterval(() => {
-                seconds++;
-                updateUI();
-            }, 1000);
-        }
-
-        function pauseTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        function updateUI() {
-            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            const timeStr = `${h}:${m}:${s}`;
-            
-            document.getElementById('main-timer').textContent = timeStr;
-            document.getElementById('timer-display-large').textContent = timeStr;
-            
-            let percent = Math.min((seconds / 21600) * 100, 100);
-            document.getElementById('meta-bar').style.width = percent + "%";
-            document.getElementById('percent-text').textContent = Math.floor(percent) + "% da meta (6h)";
-        }
-
-        function saveToCloud() {
-            if(seconds === 0) return alert("Timer zerado!");
-            const note = document.getElementById('study-note').value || "Sem notas";
-            const session = {
-                usuario: currentUser,
-                tempo: document.getElementById('main-timer').textContent,
-                data: new Date().toLocaleDateString(),
-                resumo: note
-            };
-            localStorage.setItem('session-' + Date.now(), JSON.stringify(session));
-            alert("Progresso salvo!");
-            seconds = 0;
-            updateUI();
-            loadHistory();
-        }
-
-        function loadHistory() {
-            let count = 0;
-            const feed = document.getElementById('activity-feed');
-            feed.innerHTML = "";
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('session-')) {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    if(data.usuario === currentUser) {
-                        count++;
-                        feed.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><small>${data.data}</small> - <b>${data.tempo}</b>: ${data.resumo}</div>`;
-                    }
+        // LÓGICA DO CALENDÁRIO
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'pt-br',
+                themeSystem: 'standard',
+                events: JSON.parse(localStorage.getItem('events-' + currentUser) || '[]'),
+                dateClick: function(info) {
+                    addEvent(info.dateStr);
                 }
+            });
+            calendar.render();
+        }
+
+        function addEvent(date = null) {
+            const title = prompt("O que você planejou para este dia?");
+            const eventDate = date || prompt("Digite a data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            
+            if (title && eventDate) {
+                const newEvent = { title: title, start: eventDate, allDay: true };
+                calendar.addEvent(newEvent);
+                
+                // Salvar no LocalStorage
+                const events = JSON.parse(localStorage.getItem('events-' + currentUser) || '[]');
+                events.push(newEvent);
+                localStorage.setItem('events-' + currentUser, JSON.stringify(events));
             }
-            document.getElementById('stats-sessions').textContent = count;
         }
 
         function addTask() {
-            const t = prompt("Nova tarefa:");
+            const t = prompt("O que precisa fazer?");
             if(!t) return;
             const tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || "[]");
             tasks.push({title: t, completed: false});
@@ -348,35 +189,15 @@
         function loadTasks() {
             const list = document.getElementById('tasks-list');
             const tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || "[]");
-            list.innerHTML = tasks.map((t, i) => `
-                <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center">
-                    <input type="checkbox" ${t.completed ? 'checked' : ''}>
-                    <span>${t.title}</span>
-                </div>
-            `).join('');
+            list.innerHTML = tasks.map(t => `<div class="card" style="margin-bottom:5px; padding:10px;">📌 ${t.title}</div>`).join('');
         }
 
-        function loadTeamMembers() {
-            document.getElementById('team-list').innerHTML = `
-                <div style="text-align:center; padding:10px; background:rgba(0,0,0,0.1); border-radius:8px">
-                    <i class="fas fa-user-circle" style="font-size:2rem"></i><br>
-                    <small>${currentUser}</small><br>
-                    <span style="color:var(--success)">● online</span>
-                </div>
-            `;
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-        }
+        function logout() { localStorage.clear(); location.reload(); }
 
         window.onload = () => {
             const saved = localStorage.getItem('currentUser');
-            if(saved) {
-                currentUser = saved;
-                enterWorkspace();
-            }
-        };
+            if(saved) { currentUser = saved; enterWorkspace(); }
+        }
     </script>
 </body>
 </html>
