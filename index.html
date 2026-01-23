@@ -2,61 +2,74 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Learn Código - Estudo Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Código - Sistema de Prazos</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --danger: #f43f5e; }
-        body { margin: 0; font-family: sans-serif; background: var(--bg); color: white; display: flex; height: 100vh; }
+        :root { --primary: #0ea5e9; --dark: #0f172a; --text: #f8fafc; }
         
-        /* Sidebar */
-        .sidebar { width: 240px; background: #020617; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .nav-btn { background: none; border: none; color: #94a3b8; padding: 12px; text-align: left; cursor: pointer; border-radius: 8px; font-size: 16px; }
-        .nav-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background-color: var(--dark); color: var(--text);
+            display: flex; height: 100vh; overflow: hidden;
+        }
 
-        /* Conteúdo */
-        .main { flex: 1; padding: 30px; overflow-y: auto; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        
-        /* O CALENDÁRIO - Forçando cores visíveis */
-        #calendar-box { 
-            background: white !important; /* Fundo branco para não ter erro */
-            color: #333 !important; 
-            padding: 20px; 
+        /* Sidebar */
+        .sidebar { width: 250px; background: #020617; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid #1e293b; }
+        .nav-item { 
+            padding: 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer;
+            color: #94a3b8; transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .nav-item:hover { background: #1e293b; color: white; }
+        .nav-item.active { background: var(--primary); color: white; }
+
+        /* Area Principal */
+        .content { flex: 1; padding: 30px; position: relative; overflow-y: auto; }
+        .tab-panel { display: none; width: 100%; }
+        .tab-panel.active { display: block; }
+
+        /* CALENDÁRIO - SEGURANÇA DE LAYOUT */
+        #calendar-wrapper { 
+            background: white; /* Fundo branco para garantir contraste */
             border-radius: 12px; 
-            min-height: 600px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            padding: 20px;
+            min-height: 700px; /* Altura mínima forçada para não sumir */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
         }
         
-        /* Ajuste de texto dentro do calendário */
-        .fc { color: #333 !important; }
-        .fc-toolbar-title { color: #333 !important; }
-        .fc-daygrid-day-number { color: #333 !important; text-decoration: none !important; }
+        /* Forçar visibilidade dos textos do calendário */
+        .fc { color: #1e293b !important; max-height: 800px; }
+        .fc-toolbar-title { font-weight: bold; color: #0f172a !important; }
+        .fc-daygrid-day-number { color: #0f172a !important; padding: 5px !important; }
 
-        .btn-add { background: var(--accent); color: black; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
+        .btn-new {
+            background: var(--primary); color: white; border: none;
+            padding: 10px 20px; border-radius: 6px; cursor: pointer;
+            font-weight: bold; margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="sidebar">
-        <h2 style="color: var(--accent); margin-bottom: 20px;">Learn Código</h2>
-        <button class="nav-btn active" onclick="showTab('dash', this)">🏠 Dashboard</button>
-        <button class="nav-btn" id="cal-trigger" onclick="showTab('cal', this)">📅 Calendário</button>
-        <button class="nav-btn" onclick="location.reload()">🔄 Resetar App</button>
-    </nav>
+    <aside class="sidebar">
+        <h2 style="color: var(--primary); margin-bottom: 30px;">Learn Código</h2>
+        <div class="nav-item active" onclick="changeTab('home', this)"><i class="fas fa-home"></i> Início</div>
+        <div class="nav-item" onclick="changeTab('calendar-tab', this)"><i class="fas fa-calendar-check"></i> Meu Calendário</div>
+        <div class="nav-item" onclick="location.reload()" style="margin-top: auto; color: #f43f5e;"><i class="fas fa-sync"></i> Recarregar App</div>
+    </aside>
 
-    <main class="main">
-        <div id="dash" class="tab active">
-            <h1>Bons estudos! 🚀</h1>
-            <p>Clique em "Calendário" para organizar seus prazos.</p>
+    <main class="content">
+        <div id="home" class="tab-panel active">
+            <h1>Workspace Ativo</h1>
+            <p>Clique no menu ao lado para abrir o calendário de longo prazo.</p>
         </div>
 
-        <div id="cal" class="tab">
-            <button class="btn-add" onclick="addEventManual()">+ Adicionar Data Importante</button>
-            <div id="calendar-box">
+        <div id="calendar-tab" class="tab-panel">
+            <button class="btn-new" onclick="manualAdd()">+ Adicionar Compromisso</button>
+            <div id="calendar-wrapper">
                 <div id="calendar"></div>
             </div>
         </div>
@@ -64,65 +77,84 @@
 
     <script>
         let calendar;
-        const storageKey = 'learn_calendar_events';
+        const DB_KEY = 'learn_codigo_events_v3';
 
-        // Inicializa o calendário assim que a página carregar, mas não renderiza ainda
+        // 1. Inicialização Segura
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'pt-br',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-                events: JSON.parse(localStorage.getItem(storageKey) || '[]'),
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                // Carrega eventos salvos
+                events: JSON.parse(localStorage.getItem(DB_KEY) || '[]'),
                 
-                // ADICIONAR: Clique no dia
+                // FUNÇÃO: ADICIONAR (Clique no dia)
                 dateClick: function(info) {
-                    let title = prompt("O que você tem para o dia " + info.dateStr + "?");
+                    const title = prompt("O que você quer agendar para " + info.dateStr + "?");
                     if (title) {
-                        calendar.addEvent({ title: title, start: info.dateStr, allDay: true });
-                        save();
+                        calendar.addEvent({
+                            title: title,
+                            start: info.dateStr,
+                            allDay: true,
+                            backgroundColor: '#0ea5e9'
+                        });
+                        saveToLocal();
                     }
                 },
-                
-                // APAGAR: Clique no evento
+
+                // FUNÇÃO: APAGAR (Clique no evento)
                 eventClick: function(info) {
-                    if (confirm("Deseja apagar: " + info.event.title + "?")) {
+                    if (confirm("Deseja apagar o evento: '" + info.event.title + "'?")) {
                         info.event.remove();
-                        save();
+                        saveToLocal();
                     }
                 }
             });
         });
 
-        function showTab(id, btn) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        // 2. Troca de aba com "Force Render"
+        function changeTab(tabId, element) {
+            // Esconde tudo
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
+            // Mostra o atual
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
 
-            if (id === 'cal') {
-                // O segredo está aqui: esperar o navegador mostrar a div para desenhar o calendário
-                setTimeout(() => { 
-                    calendar.render(); 
-                    calendar.updateSize(); 
-                }, 100);
+            // Se for o calendário, forçar o desenho na tela
+            if (tabId === 'calendar-tab') {
+                setTimeout(() => {
+                    calendar.render();
+                    calendar.updateSize();
+                }, 50);
             }
         }
 
-        function addEventManual() {
-            let title = prompt("Título do evento:");
-            let data = prompt("Data (formato: AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            if (title && data) {
-                calendar.addEvent({ title: title, start: data, allDay: true });
-                save();
-            }
+        // 3. Persistência de Dados
+        function saveToLocal() {
+            const allEvents = calendar.getEvents().map(e => ({
+                title: e.title,
+                start: e.startStr,
+                allDay: e.allDay
+            }));
+            localStorage.setItem(DB_KEY, JSON.stringify(allEvents));
         }
 
-        function save() {
-            const evs = calendar.getEvents().map(e => ({ title: e.title, start: e.startStr, allDay: e.allDay }));
-            localStorage.setItem(storageKey, JSON.stringify(evs));
+        // 4. Backup: Adição via Botão
+        function manualAdd() {
+            const title = prompt("Título do plano:");
+            const date = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            if (title && date) {
+                calendar.addEvent({ title: title, start: date, allDay: true });
+                saveToLocal();
+            }
         }
     </script>
 </body>
