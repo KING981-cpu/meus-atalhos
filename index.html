@@ -13,14 +13,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('✓ Service Worker registered'))
-                .catch(err => console.log('✗ Service Worker error:', err));
-        }
-    </script>
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -40,13 +32,33 @@
             --sidebar-bg: #1a1a1a;
             --card-bg: #242424;
             --text: #e0e0e0;
-            --accent: #00d2ff;
         }
 
-        html, body { height: 100%; width: 100%; overflow: hidden; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; transition: 0.3s; }
+        html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; transition: 0.3s; }
 
-        /* Ajuste na Sidebar para ser responsiva */
+        /* LOGIN SCREEN */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .login-screen.hidden { display: none; }
+        .login-container { 
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* SIDEBAR */
         .sidebar { 
             width: 280px;
             background: var(--sidebar-bg);
@@ -54,158 +66,160 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-            overflow-y: auto;
             z-index: 150;
             transition: transform 0.3s ease;
         }
-        
         .sidebar-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        .sidebar-section { margin-bottom: 20px; }
-        .sidebar-section-title { font-size: 0.85rem; text-transform: uppercase; opacity: 0.7; margin-bottom: 10px; }
+        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; margin: 15px 0 10px; }
         
         .nav-btn { 
             background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
             color: white;
             padding: 12px;
             margin-bottom: 8px;
-            border-radius: 6px;
+            border-radius: 8px;
             text-align: left;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
             width: 100%;
+            display: flex; align-items: center; gap: 10px;
         }
-        .nav-btn:hover { background: rgba(255,255,255,0.2); transform: translateX(5px); }
-        .nav-btn.active { background: var(--accent); color: #000; }
-        
-        .main-content { 
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-            display: none;
-            -webkit-overflow-scrolling: touch;
-        }
+        .nav-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: none; }
         .main-content.show { display: block; }
-
-        .card { 
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .card-title { font-size: 1.2rem; font-weight: 600; }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         
-        .timer-display { 
-            font-size: clamp(2rem, 8vw, 3rem);
-            font-weight: bold;
-            color: var(--accent);
-            text-align: center;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
+        .tab-content { display: none; }
+        .tab-content.show { display: block; }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+
+        /* FORM ELEMENTS */
+        input, textarea { 
+            width: 100%; padding: 12px; margin-bottom: 10px; 
+            border-radius: 8px; border: 1px solid #ddd; background: var(--card-bg); color: var(--text);
+        }
+        .btn-primary { 
+            background: var(--accent); border: none; padding: 12px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; width: 100%;
         }
 
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background: var(--card-bg);
-            color: var(--text);
-            font-size: 16px; 
-        }
+        /* TIMER */
+        .timer-display { font-size: 3rem; text-align: center; font-family: monospace; color: var(--accent); margin: 15px 0; }
+        .progress-bar { background: rgba(0,0,0,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: 0.3s; }
 
-        /* Menu Mobile Toggle */
+        /* MOBILE OPTIMIZATION */
         .mobile-toggle {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-            z-index: 200;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; bottom: 20px; right: 20px;
+            width: 60px; height: 60px; border-radius: 50%; background: var(--accent);
+            z-index: 200; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: none; font-size: 24px;
         }
 
-        /* MEDIA QUERIES PARA CELULAR */
         @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                transform: translateX(-100%);
-            }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
-            .main-content { padding: 15px; }
+            .mobile-toggle { display: flex; align-items: center; justify-content: center; }
             .grid-2, .grid-3 { grid-template-columns: 1fr; }
-            .mobile-toggle { display: flex; }
-            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .main-content { padding: 15px; padding-bottom: 100px; }
         }
 
-        /* Estilos de Status e Progressão */
-        .progress-bar { background: rgba(0,0,0,0.1); border-radius: 5px; height: 12px; margin: 15px 0; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, var(--accent), #00a8cc); height: 100%; width: 0%; transition: width 0.5s ease; }
-        .status-indicator { width: 12px; height: 12px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: white; border-left: 5px solid var(--success); box-shadow: var(--shadow); z-index: 2000; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <i class="fas fa-code"></i> Learn Código
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <h2 style="text-align:center; margin-bottom:10px;">🚀 Learn Código</h2>
+            <p style="text-align:center; font-size: 0.85rem; opacity: 0.7; margin-bottom: 20px;">Workspace Colaborativo</p>
+            <div id="auth-message" style="margin-bottom: 10px; text-align: center;"></div>
+            <input type="text" id="username" placeholder="Usuário">
+            <input type="password" id="password" placeholder="Senha">
+            <button class="btn-primary" onclick="handleAuth()" id="auth-btn">Entrar</button>
+            <p style="text-align:center; margin-top: 15px; font-size: 0.9rem;">
+                <span onclick="toggleAuthMode()" style="cursor:pointer; color: var(--accent); text-decoration: underline;">Criar conta</span>
+            </p>
         </div>
-        
+    </div>
+
+    <aside class="sidebar" id="app-sidebar">
+        <div class="sidebar-header"><i class="fas fa-rocket"></i> Learn Código</div>
         <div class="sidebar-section">
-            <p class="sidebar-section-title">Workspace</p>
-            <button class="nav-btn active" onclick="showSection('dashboard')">
-                <i class="fas fa-columns"></i> Dashboard
-            </button>
-            <button class="nav-btn">
-                <i class="fas fa-tasks"></i> Projetos
-            </button>
+            <div class="sidebar-section-title">Navegação</div>
+            <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
+            <button class="nav-btn" onclick="switchTab('timer')"><i class="fas fa-hourglass-start"></i> Cronômetro</button>
+            <button class="nav-btn" onclick="switchTab('tasks')"><i class="fas fa-tasks"></i> Tarefas</button>
+            <button class="nav-btn" onclick="switchTab('team')"><i class="fas fa-users"></i> Equipe</button>
+        </div>
+        <div class="sidebar-section" style="margin-top: auto;">
+            <button class="nav-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i> Tema</button>
+            <button class="nav-btn" onclick="logout()" style="color: #ff7675;"><i class="fas fa-sign-out-alt"></i> Sair</button>
         </div>
     </aside>
 
-    <main class="main-content show" id="dashboard">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Dashboard Principal</h2>
-                <div class="status-indicator"></div>
+    <main class="main-content" id="study-panel">
+        <header style="margin-bottom: 25px;">
+            <h1>Olá, <span id="user-display"></span>!</h1>
+        </header>
+
+        <div id="dashboard-tab" class="tab-content show">
+            <div class="grid-3">
+                <div class="card">
+                    <h3>⏱ Tempo Hoje</h3>
+                    <div class="timer-display" id="main-timer">00:00:00</div>
+                    <div class="progress-bar"><div class="progress-fill" id="meta-bar"></div></div>
+                    <small id="percent-text">0% da meta (6h)</small>
+                </div>
+                <div class="card">
+                    <h3>👥 Equipe</h3>
+                    <div style="font-size: 2.5rem; text-align: center; margin: 10px 0;">1</div>
+                    <p style="text-align: center;">Online agora</p>
+                </div>
+                <div class="card">
+                    <h3>📊 Sessões</h3>
+                    <div id="stats-sessions" style="font-size: 2.5rem; text-align: center; margin: 10px 0;">0</div>
+                    <p style="text-align: center;">Salvas</p>
+                </div>
             </div>
-            <p>Seu ambiente de trabalho colaborativo está pronto.</p>
+            <div class="card">
+                <h3>📈 Atividade Recente</h3>
+                <div id="activity-feed" style="margin-top: 10px;"></div>
+            </div>
         </div>
 
-        <div class="grid-2">
+        <div id="timer-tab" class="tab-content">
             <div class="card">
-                <h3>Foco / Pomodoro</h3>
-                <div class="timer-display">25:00</div>
-                <div class="progress-bar"><div class="progress-fill" style="width: 45%;"></div></div>
+                <div class="timer-display" id="timer-display-large">00:00:00</div>
+                <div class="grid-2">
+                    <button class="btn-primary" onclick="startTimer()"><i class="fas fa-play"></i> Iniciar</button>
+                    <button class="btn-primary" onclick="pauseTimer()" style="background: var(--warning);"><i class="fas fa-pause"></i> Pausar</button>
+                </div>
+                <button class="btn-primary" style="margin-top: 10px; background: var(--success); color: white;" onclick="saveToCloud()">
+                    <i class="fas fa-cloud-upload-alt"></i> Salvar Progresso
+                </button>
             </div>
+            <textarea id="study-note" placeholder="O que você está aprendendo?"></textarea>
+        </div>
+
+        <div id="tasks-tab" class="tab-content">
             <div class="card">
-                <h3>Atividade</h3>
-                <p>Nenhuma atualização recente.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>📋 Minhas Tarefas</h3>
+                    <button onclick="addTask()" class="btn-primary" style="width: auto; padding: 5px 15px;">+</button>
+                </div>
+                <div id="tasks-list"></div>
+            </div>
+        </div>
+
+        <div id="team-tab" class="tab-content">
+            <div class="card">
+                <h3>👥 Membros Online</h3>
+                <div id="team-list" style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;"></div>
             </div>
         </div>
     </main>
@@ -215,549 +229,154 @@
     </button>
 
     <script>
+        let currentUser = "";
+        let seconds = 0;
+        let timerInterval = null;
+        let isLoginMode = true;
+
         function toggleMenu() {
-            const sidebar = document.querySelector('.sidebar');
-            const icon = document.querySelector('.mobile-toggle i');
-            sidebar.classList.toggle('active');
-            
-            if (sidebar.classList.contains('active')) {
-                icon.classList.replace('fa-bars', 'fa-times');
-            } else {
-                icon.classList.replace('fa-times', 'fa-bars');
-            }
+            document.getElementById('app-sidebar').classList.toggle('active');
         }
 
-        function showSection(id) {
-            // Lógica simples para trocar abas, se necessário
-            console.log("Navegando para: " + id);
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tab + '-tab').classList.add('show');
+            event.currentTarget.classList.add('active');
             if(window.innerWidth <= 768) toggleMenu();
         }
-    </script>
-</body>
-</html>
 
-<div id="login-screen" class="login-screen">
-    <div class="login-container">
-        <h2 style="text-align:center; margin-bottom:10px;">🚀 Learn Código</h2>
-        <p style="text-align:center; font-size: 0.85rem; color: #666; margin-bottom: 20px;">Workspace Colaborativo</p>
-        <div id="auth-message"></div>
-        <input type="text" id="username" placeholder="Usuário" autocomplete="username">
-        <input type="password" id="password" placeholder="Senha" autocomplete="current-password">
-        <button class="btn-primary" id="auth-btn" style="width: 100%;" onclick="handleAuth()"><i class="fas fa-sign-in-alt"></i> Entrar</button>
-        <p style="text-align:center; font-size: 0.85rem; margin-top: 15px;">
-            <span onclick="toggleAuthMode()" style="cursor:pointer; color: var(--accent); text-decoration: underline;">Criar conta</span>
-        </p>
-    </div>
-</div>
-
-<aside class="sidebar">
-    <div class="sidebar-header"><i class="fas fa-rocket"></i> Learn Código</div>
-    
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">Navegação</div>
-        <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
-        <button class="nav-btn" onclick="switchTab('timer')"><i class="fas fa-hourglass-start"></i> Cronômetro</button>
-        <button class="nav-btn" onclick="switchTab('tasks')"><i class="fas fa-tasks"></i> Tarefas</button>
-        <button class="nav-btn" onclick="switchTab('notes')"><i class="fas fa-sticky-note"></i> Notas</button>
-        <button class="nav-btn" onclick="switchTab('team')"><i class="fas fa-users"></i> Equipe</button>
-        <button class="nav-btn" onclick="switchTab('calendar')"><i class="fas fa-calendar-alt"></i> Calendário</button>
-    </div>
-
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">Atalhos</div>
-        <button class="nav-btn" onclick="openLink('https://chatgpt.com/')"><i class="fas fa-robot"></i> ChatGPT</button>
-        <button class="nav-btn" onclick="openLink('https://gemini.google.com/')"><i class="fas fa-sparkles"></i> Gemini</button>
-        <button class="nav-btn" onclick="openLink('https://stackoverflow.com/')"><i class="fas fa-stack-overflow"></i> Stack</button>
-    </div>
-
-    <div class="sidebar-section" style="margin-top: auto;">
-        <div class="sidebar-section-title">Preferências</div>
-        <button class="nav-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i> Tema</button>
-        <button class="nav-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
-    </div>
-</aside>
-
-<main class="main-content" id="study-panel">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-        <h1>🚀 Olá, <span id="user-display"></span>!</h1>
-        <div class="user-status">
-            <div class="status-indicator"></div>
-            <span id="online-status">Online</span>
-        </div>
-    </div>
-
-    <div id="dashboard-tab" class="tab-content show">
-        <div class="grid-3">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">⏱ Tempo</div>
-                    <span class="badge" id="time-badge">0h</span>
-                </div>
-                <div class="timer-display" id="main-timer">00:00:00</div>
-                <div class="progress-bar"><div class="progress-fill" id="meta-bar"></div></div>
-                <small id="percent-text">0% da meta (6h)</small>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">📊 Estatísticas</div>
-                </div>
-                <div style="font-size: 2rem; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0;">
-                    <div id="stats-sessions">0</div>
-                    <small>Sessões</small>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">👥 Equipe</div>
-                </div>
-                <div id="team-count" style="font-size: 2rem; font-weight: bold; color: var(--accent); text-align: center; margin: 20px 0;">
-                    <div>1</div>
-                    <small>Online</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top: 20px;">
-            <div class="card-header">
-                <div class="card-title">🚀 Atalhos Rápidos</div>
-            </div>
-            <div class="grid-2">
-                <button class="btn-site" style="background:#000000" onclick="openLink('https://chatgpt.com/')"><i class="fas fa-robot"></i> ChatGPT</button>
-                <button class="btn-site" style="background:#e74c3c" onclick="openLink('https://www.respostacerta.com.br/')"><i class="fas fa-lightbulb"></i> Resposta Certa</button>
-                <button class="btn-site" style="background:#10a37f" onclick="openLink('https://gemini.google.com/')"><i class="fas fa-sparkles"></i> Gemini</button>
-                <button class="btn-site" style="background:#8e44ad" onclick="openLink('https://www.estudesemfronteiras.com/')"><i class="fas fa-globe"></i> Estude Sem Fronteiras</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📈 Atividade Recente</div>
-            </div>
-            <div id="activity-feed" style="max-height: 200px; overflow-y: auto;"></div>
-        </div>
-    </div>
-
-    <div id="timer-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">⏱ Sessão de Estudo</div>
-            </div>
-            <div class="timer-display" id="timer-display-large">00:00:00</div>
-            <div class="progress-bar"><div class="progress-fill" id="timer-progress"></div></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-primary" onclick="startTimer()"><i class="fas fa-play"></i> Iniciar</button>
-                <button class="btn-primary" onclick="pauseTimer()" style="background: var(--warning); color: #000;"><i class="fas fa-pause"></i> Pausar</button>
-            </div>
-            <button class="btn-primary" style="width: 100%; margin-top: 10px; background: var(--success); color: white;" onclick="saveToCloud()"><i class="fas fa-cloud-upload-alt"></i> Salvar Progresso</button>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📝 Notas da Sessão</div>
-            </div>
-            <textarea id="study-note" placeholder="O que está aprendendo agora?"></textarea>
-        </div>
-    </div>
-
-    <div id="tasks-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📋 Minhas Tarefas</div>
-                <button class="btn-primary" onclick="addTask()" style="padding: 6px 10px; font-size: 0.9rem;"><i class="fas fa-plus"></i></button>
-            </div>
-            <div id="tasks-list"></div>
-        </div>
-    </div>
-
-    <div id="notes-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📝 Minhas Notas</div>
-                <button class="btn-primary" onclick="addNote()" style="padding: 6px 10px; font-size: 0.9rem;"><i class="fas fa-plus"></i></button>
-            </div>
-            <div id="notes-list"></div>
-        </div>
-    </div>
-
-    <div id="team-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">👥 Membros da Equipe</div>
-            </div>
-            <div id="team-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;"></div>
-        </div>
-    </div>
-
-    <div id="calendar-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">📅 Calendário</div>
-            </div>
-            <div id="calendar-container" style="background: white; border-radius: 8px; padding: 15px;"></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">📅 Histórico Cloud</div>
-        </div>
-        <div id="history-display" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto;"></div>
-    </div>
-</main>
-
-<script>
-    const API_BASE = window.location.origin + '/api';
-    
-    let currentUser = "";
-    let seconds = 0;
-    let timerInterval = null;
-    let isLoginMode = true;
-    let currentTab = "dashboard";
-    let tasks = [];
-    let notes = [];
-    let teamMembers = [];
-
-    function sanitizeHTML(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function showNotification(msg, type = 'success') {
-        const notif = document.createElement('div');
-        notif.className = 'notification';
-        notif.textContent = msg;
-        if (type === 'error') notif.style.borderLeftColor = '#e74c3c';
-        document.body.appendChild(notif);
-        setTimeout(() => notif.remove(), 3000);
-    }
-
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('show'));
-        document.getElementById(tab + '-tab').classList.add('show');
-        currentTab = tab;
-        document.querySelectorAll('.nav-btn').forEach((el, i) => el.classList.remove('active'));
-        event.target.classList.add('active');
-    }
-
-    function openLink(url) {
-        window.open(url, '_blank');
-        startTimer();
-    }
-
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-    }
-
-    function toggleAuthMode() {
-        isLoginMode = !isLoginMode;
-        document.getElementById('auth-btn').textContent = isLoginMode ? '🔐 Entrar' : '📝 Cadastrar';
-        document.querySelector('[onclick="toggleAuthMode()"]').textContent = isLoginMode ? 'Criar conta' : 'Já tem conta? Faça login';
-        document.getElementById('auth-message').innerHTML = '';
-    }
-
-    function showAuthMessage(msg, isError = false) {
-        const div = document.getElementById('auth-message');
-        div.className = isError ? 'error-msg' : 'success-msg';
-        div.textContent = msg;
-    }
-
-    async function handleAuth() {
-        const user = document.getElementById('username').value.trim().toLowerCase();
-        const pass = document.getElementById('password').value;
-
-        if (!user || !pass) {
-            showAuthMessage('Preencha todos os campos!', true);
-            return;
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-btn').textContent = isLoginMode ? 'Entrar' : 'Cadastrar';
+            document.querySelector('[onclick="toggleAuthMode()"]').textContent = isLoginMode ? 'Criar conta' : 'Já tem conta? Login';
         }
 
-        if (user.length < 3 || user.length > 20) {
-            showAuthMessage('Usuário deve ter 3-20 caracteres!', true);
-            return;
-        }
-
-        if (pass.length < 6) {
-            showAuthMessage('Senha deve ter pelo menos 6 caracteres!', true);
-            return;
-        }
-
-        try {
-            const endpoint = isLoginMode ? '/login' : '/register';
-            const response = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, password: pass })
-            }).catch(() => ({ok: false, json: async () => ({message: 'Conexão local - modo demo'})}));
-
-            if (response.ok || !isLoginMode) {
-                if (isLoginMode) {
-                    currentUser = user;
-                    localStorage.setItem('authToken', 'demo-token-' + user);
-                    localStorage.setItem('currentUser', user);
-                }
-                enterWorkspace();
-            } else {
-                const result = await response.json();
-                showAuthMessage(result.message || 'Erro na autenticação!', true);
-            }
-        } catch (e) {
-            console.log('Demo mode - conexão local simulated');
-            currentUser = document.getElementById('username').value;
-            localStorage.setItem('currentUser', currentUser);
+        function handleAuth() {
+            const user = document.getElementById('username').value.trim();
+            if(user.length < 3) return alert("Usuário muito curto!");
+            
+            currentUser = user;
+            localStorage.setItem('currentUser', user);
             enterWorkspace();
         }
-    }
 
-    function enterWorkspace() {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('study-panel').classList.add('show');
-        document.getElementById('user-display').textContent = sanitizeHTML(currentUser);
-        loadHistory();
-        loadTeamMembers();
-        loadTasks();
-        loadNotes();
-    }
+        function enterWorkspace() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('study-panel').classList.add('show');
+            document.getElementById('user-display').textContent = currentUser;
+            loadTasks();
+            loadHistory();
+            loadTeamMembers();
+        }
 
-    function logout() {
-        if (confirm('Tem certeza que deseja sair?')) {
-            currentUser = "";
-            seconds = 0;
-            clearInterval(timerInterval);
-            localStorage.removeItem('authToken');
+        function logout() {
             localStorage.removeItem('currentUser');
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('study-panel').classList.remove('show');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-        }
-    }
-
-    function startTimer() {
-        if (!timerInterval) timerInterval = setInterval(() => { seconds++; updateUI(); }, 1000);
-    }
-
-    function pauseTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-
-    function updateUI() {
-        const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
-        const timeStr = `${h}:${m}:${s}`;
-        
-        document.getElementById('main-timer').textContent = timeStr;
-        if (document.getElementById('timer-display-large')) {
-            document.getElementById('timer-display-large').textContent = timeStr;
+            location.reload();
         }
 
-        let percent = Math.min((seconds / 21600) * 100, 100);
-        document.getElementById('meta-bar').style.width = percent + "%";
-        if (document.getElementById('timer-progress')) {
-            document.getElementById('timer-progress').style.width = percent + "%";
-        }
-        document.getElementById('percent-text').textContent = Math.floor(percent) + "% da meta (6h)";
-        document.getElementById('time-badge').textContent = h + 'h ' + m + 'm';
-    }
-
-    async function saveToCloud() {
-        if (seconds === 0) {
-            showNotification('Cronômetro zerado! Estude um pouco antes de salvar.', 'error');
-            return;
+        function startTimer() {
+            if (timerInterval) return;
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateUI();
+            }, 1000);
         }
 
-        const note = document.getElementById('study-note').value.trim();
-        if (note.length > 500) {
-            showNotification('Nota muito longa (máx: 500 caracteres)!', 'error');
-            return;
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
         }
 
-        try {
+        function updateUI() {
             const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
             const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
             const s = (seconds % 60).toString().padStart(2, '0');
+            const timeStr = `${h}:${m}:${s}`;
+            
+            document.getElementById('main-timer').textContent = timeStr;
+            document.getElementById('timer-display-large').textContent = timeStr;
+            
+            let percent = Math.min((seconds / 21600) * 100, 100);
+            document.getElementById('meta-bar').style.width = percent + "%";
+            document.getElementById('percent-text').textContent = Math.floor(percent) + "% da meta (6h)";
+        }
 
-            const data = {
+        function saveToCloud() {
+            if(seconds === 0) return alert("Timer zerado!");
+            const note = document.getElementById('study-note').value || "Sem notas";
+            const session = {
                 usuario: currentUser,
-                data: new Date().toLocaleDateString('pt-BR'),
-                tempo: `${h}:${m}:${s}`,
-                resumo: note || 'Sem anotações'
+                tempo: document.getElementById('main-timer').textContent,
+                data: new Date().toLocaleDateString(),
+                resumo: note
             };
-
-            localStorage.setItem('session-' + Date.now(), JSON.stringify(data));
-            showNotification('Progresso salvo com sucesso!');
+            localStorage.setItem('session-' + Date.now(), JSON.stringify(session));
+            alert("Progresso salvo!");
             seconds = 0;
-            document.getElementById('study-note').value = "";
             updateUI();
             loadHistory();
-        } catch (e) {
-            showNotification('Erro ao salvar.', 'error');
         }
-    }
 
-    async function loadHistory() {
-        try {
-            const history = [];
+        function loadHistory() {
+            let count = 0;
+            const feed = document.getElementById('activity-feed');
+            feed.innerHTML = "";
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key.startsWith('session-')) {
                     const data = JSON.parse(localStorage.getItem(key));
-                    if (data.usuario === currentUser) history.push(data);
+                    if(data.usuario === currentUser) {
+                        count++;
+                        feed.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd"><small>${data.data}</small> - <b>${data.tempo}</b>: ${data.resumo}</div>`;
+                    }
                 }
             }
-
-            const html = history.length > 0
-                ? history.map((item, idx) => `
-                    <div class="activity-item">
-                        <b>${sanitizeHTML(item.data)}</b>: <span style="color: var(--accent);">${sanitizeHTML(item.tempo)}</span><br>
-                        <small>${sanitizeHTML(item.resumo)}</small>
-                    </div>
-                `).join('')
-                : '<p style="color: #999;">Nenhuma sessão registrada ainda.</p>';
-
-            document.getElementById('history-display').innerHTML = html;
-            document.getElementById('stats-sessions').textContent = history.length;
-        } catch (e) {
-            document.getElementById('history-display').innerHTML = '<p style="color: #e74c3c;">Erro ao carregar histórico.</p>';
+            document.getElementById('stats-sessions').textContent = count;
         }
-    }
 
-    function addTask() {
-        const title = prompt('Nome da tarefa:');
-        if (!title) return;
-        tasks.push({ id: Date.now(), title, completed: false });
-        saveTasks();
-        loadTasks();
-    }
+        function addTask() {
+            const t = prompt("Nova tarefa:");
+            if(!t) return;
+            const tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || "[]");
+            tasks.push({title: t, completed: false});
+            localStorage.setItem('tasks-' + currentUser, JSON.stringify(tasks));
+            loadTasks();
+        }
 
-    function toggleTask(id) {
-        tasks.find(t => t.id === id).completed = !tasks.find(t => t.id === id).completed;
-        saveTasks();
-        loadTasks();
-    }
-
-    function deleteTask(id) {
-        tasks = tasks.filter(t => t.id !== id);
-        saveTasks();
-        loadTasks();
-    }
-
-    function saveTasks() {
-        localStorage.setItem('tasks-' + currentUser, JSON.stringify(tasks));
-    }
-
-    function loadTasks() {
-        tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || '[]');
-        const html = tasks.length > 0
-            ? tasks.map(t => `
-                <div class="kanban-card" style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})" style="width: auto;">
-                    <span style="flex: 1; ${t.completed ? 'opacity: 0.5; text-decoration: line-through;' : ''}">${sanitizeHTML(t.title)}</span>
-                    <button onclick="deleteTask(${t.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer;">🗑</button>
+        function loadTasks() {
+            const list = document.getElementById('tasks-list');
+            const tasks = JSON.parse(localStorage.getItem('tasks-' + currentUser) || "[]");
+            list.innerHTML = tasks.map((t, i) => `
+                <div style="display:flex; gap:10px; margin-bottom:10px; align-items:center">
+                    <input type="checkbox" ${t.completed ? 'checked' : ''}>
+                    <span>${t.title}</span>
                 </div>
-            `).join('')
-            : '<p style="color: #999;">Nenhuma tarefa. Adicione uma!</p>';
-        document.getElementById('tasks-list').innerHTML = html;
-    }
-
-    function addNote() {
-        const title = prompt('Título da nota:');
-        if (!title) return;
-        notes.push({ id: Date.now(), title, content: '', created: new Date().toLocaleDateString('pt-BR') });
-        saveNotes();
-        loadNotes();
-    }
-
-    function editNote(id) {
-        const note = notes.find(n => n.id === id);
-        const content = prompt('Conteúdo:', note.content);
-        if (content !== null) {
-            note.content = content;
-            saveNotes();
-            loadNotes();
+            `).join('');
         }
-    }
 
-    function deleteNote(id) {
-        notes = notes.filter(n => n.id !== id);
-        saveNotes();
-        loadNotes();
-    }
-
-    function saveNotes() {
-        localStorage.setItem('notes-' + currentUser, JSON.stringify(notes));
-    }
-
-    function loadNotes() {
-        notes = JSON.parse(localStorage.getItem('notes-' + currentUser) || '[]');
-        const html = notes.length > 0
-            ? notes.map(n => `
-                <div class="card" style="margin-bottom: 10px;">
-                    <div class="card-header">
-                        <div><b>${sanitizeHTML(n.title)}</b><br><small>${n.created}</small></div>
-                        <button onclick="deleteNote(${n.id})" style="background: none; border: none; color: #e74c3c; cursor: pointer;">🗑</button>
-                    </div>
-                    <p>${sanitizeHTML(n.content)}</p>
-                    <button class="btn-primary" onclick="editNote(${n.id})" style="font-size: 0.85rem; padding: 6px 10px;">✏️ Editar</button>
+        function loadTeamMembers() {
+            document.getElementById('team-list').innerHTML = `
+                <div style="text-align:center; padding:10px; background:rgba(0,0,0,0.1); border-radius:8px">
+                    <i class="fas fa-user-circle" style="font-size:2rem"></i><br>
+                    <small>${currentUser}</small><br>
+                    <span style="color:var(--success)">● online</span>
                 </div>
-            `).join('')
-            : '<p style="color: #999;">Nenhuma nota. Crie uma!</p>';
-        document.getElementById('notes-list').innerHTML = html;
-    }
-
-    function loadTeamMembers() {
-        teamMembers = [
-            { name: currentUser, status: 'online', avatar: '👤' },
-            { name: 'Colega 1', status: 'offline', avatar: '👥' }
-        ];
-        
-        const html = teamMembers.map(m => `
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 2rem; margin-bottom: 10px;">${m.avatar}</div>
-                <b>${sanitizeHTML(m.name)}</b><br>
-                <small style="color: ${m.status === 'online' ? '#27ae60' : '#999'};">● ${m.status}</small>
-            </div>
-        `).join('');
-        
-        document.getElementById('team-list').innerHTML = html;
-    }
-
-    function addActivityLog(action) {
-        const feed = document.getElementById('activity-feed');
-        if (!feed) return;
-        
-        const item = document.createElement('div');
-        item.className = 'activity-item';
-        item.textContent = `${new Date().toLocaleTimeString('pt-BR')} - ${action}`;
-        feed.insertBefore(item, feed.firstChild);
-        
-        if (feed.children.length > 10) feed.removeChild(feed.lastChild);
-    }
-
-    window.addEventListener('load', () => {
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
+            `;
         }
 
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            currentUser = savedUser;
-            enterWorkspace();
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
         }
-    });
 
-    window.addEventListener('focus', () => {
-        document.getElementById('online-status').textContent = 'Online';
-        addActivityLog(currentUser + ' online');
-    });
-
-    window.addEventListener('blur', () => {
-        document.getElementById('online-status').textContent = 'Away';
-    });
-</script>
+        window.onload = () => {
+            const saved = localStorage.getItem('currentUser');
+            if(saved) {
+                currentUser = saved;
+                enterWorkspace();
+            }
+        };
+    </script>
 </body>
 </html>
